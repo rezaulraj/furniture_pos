@@ -7,6 +7,18 @@ const normalizeError = (error, fallback) =>
   error?.message ||
   fallback;
 
+const toFormData = (payload) => {
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      formData.append(key, value);
+    }
+  });
+
+  return formData;
+};
+
 export const useProductStore = create((set) => ({
   products: [],
   isLoading: false,
@@ -34,7 +46,14 @@ export const useProductStore = create((set) => ({
   createProduct: async (payload) => {
     set({ isSubmitting: true, error: "" });
     try {
-      const res = await api.post("/products", payload);
+      const formData = toFormData(payload);
+
+      const res = await api.post("/products", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       const product = res.data?.data;
 
       set((state) => ({
@@ -53,7 +72,14 @@ export const useProductStore = create((set) => ({
   updateProduct: async (productId, payload) => {
     set({ isSubmitting: true, error: "" });
     try {
-      const res = await api.patch(`/products/${productId}`, payload);
+      const formData = toFormData(payload);
+
+      const res = await api.patch(`/products/${productId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       const product = res.data?.data;
 
       set((state) => ({

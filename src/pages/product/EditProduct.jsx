@@ -6,10 +6,14 @@ import { Ic } from "../../components/Icons";
 import { useProductStore } from "../../store/productStore";
 import { useCategoryStore } from "../../store/categoryStore";
 
+const API_ORIGIN = "http://localhost:5000";
+
 const EMPTY = {
   sku: "",
   product_name: "",
-  image_url: "",
+  image_url: null,
+  image_preview: "",
+  existing_image_url: "",
   description: "",
   category_id: "",
   cost_price: "",
@@ -18,6 +22,13 @@ const EMPTY = {
   material: "",
   color: "",
   brand: "",
+};
+
+const getImageSrc = (url) => {
+  if (!url) return "";
+  if (url.startsWith("blob:")) return url;
+  if (url.startsWith("http")) return url;
+  return `${API_ORIGIN}${url}`;
 };
 
 export default function EditProduct() {
@@ -52,9 +63,7 @@ export default function EditProduct() {
   }, [fetchCategories, clearProductError]);
 
   useEffect(() => {
-    if (!products.length) {
-      fetchProducts();
-    }
+    if (!products.length) fetchProducts();
   }, [products.length, fetchProducts]);
 
   const currentProduct = useMemo(
@@ -64,10 +73,14 @@ export default function EditProduct() {
 
   useEffect(() => {
     if (currentProduct && !initialized) {
+      const oldImage = currentProduct.image_url || "";
+
       setForm({
         sku: currentProduct.sku || "",
         product_name: currentProduct.product_name || "",
-        image_url: currentProduct.image_url || "",
+        image_url: null,
+        image_preview: oldImage ? getImageSrc(oldImage) : "",
+        existing_image_url: oldImage,
         description: currentProduct.description || "",
         category_id: currentProduct.category_id
           ? String(currentProduct.category_id)
@@ -87,6 +100,7 @@ export default function EditProduct() {
         color: currentProduct.color || "",
         brand: currentProduct.brand || "",
       });
+
       setInitialized(true);
     }
   }, [currentProduct, initialized]);
@@ -105,15 +119,46 @@ export default function EditProduct() {
     const profit = sell - cost;
     const margin = ((profit / cost) * 100).toFixed(1);
 
-    return {
-      profit,
-      margin,
-    };
+    return { profit, margin };
   }, [form.cost_price, form.selling_price]);
 
   const setField = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
     setFormError("");
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setFormError("Please select a valid image file");
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      setFormError("Image size must be under 3MB");
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      image_url: file,
+      image_preview: URL.createObjectURL(file),
+    }));
+
+    setFormError("");
+  };
+
+  const removeNewImage = () => {
+    setForm((prev) => ({
+      ...prev,
+      image_url: null,
+      image_preview: prev.existing_image_url
+        ? getImageSrc(prev.existing_image_url)
+        : "",
+    }));
   };
 
   const validate = () => {
@@ -138,6 +183,7 @@ export default function EditProduct() {
 
   const handleSubmit = async () => {
     const validationError = validate();
+
     if (validationError) {
       setFormError(validationError);
       return;
@@ -147,7 +193,7 @@ export default function EditProduct() {
       const payload = {
         sku: form.sku.trim(),
         product_name: form.product_name.trim(),
-        image_url: form.image_url.trim(),
+        image_url: form.image_url,
         description: form.description.trim(),
         category_id: Number(form.category_id),
         cost_price: Number(form.cost_price),
@@ -161,7 +207,7 @@ export default function EditProduct() {
       const product = await updateProduct(Number(id), payload);
       setSavedProduct(product);
     } catch {
-      // store error handles ui
+      // productError handles UI
     }
   };
 
@@ -224,9 +270,11 @@ export default function EditProduct() {
             <Ic.Eye /> View Products
           </Btn>
           <Btn
-            onClick={() =>
-              navigate(`/products/edit/${savedProduct.product_id}`)
-            }
+            onClick={() => {
+              setSavedProduct(null);
+              setInitialized(false);
+              fetchProducts();
+            }}
           >
             <Ic.Edit /> Continue Editing
           </Btn>
@@ -252,15 +300,9 @@ export default function EditProduct() {
     );
   }
 
-  if (!isLoading && !currentProduct && initialized) {
+  if (!isLoading && !currentProduct && products.length > 0) {
     return (
-      <div
-        style={{
-          ...card(),
-          padding: 34,
-          textAlign: "center",
-        }}
-      >
+      <div style={{ ...card(), padding: 34, textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 10 }}>📦</div>
         <p
           style={{
@@ -272,13 +314,7 @@ export default function EditProduct() {
         >
           Product not found
         </p>
-        <p
-          style={{
-            color: T.textSub,
-            fontSize: 12.5,
-            margin: 0,
-          }}
-        >
+        <p style={{ color: T.textSub, fontSize: 12.5, margin: 0 }}>
           This product may have been deleted or not loaded yet.
         </p>
         <Btn onClick={() => navigate("/products")} style={{ marginTop: 16 }}>
@@ -298,13 +334,7 @@ export default function EditProduct() {
         gap: 16,
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <div
           style={{
             width: 48,
@@ -323,23 +353,12 @@ export default function EditProduct() {
 
         <div>
           <h1
-            style={{
-              color: T.text,
-              fontWeight: 900,
-              fontSize: 22,
-              margin: 0,
-            }}
+            style={{ color: T.text, fontWeight: 900, fontSize: 22, margin: 0 }}
           >
             Edit Product
           </h1>
-          <p
-            style={{
-              color: T.textSub,
-              fontSize: 12,
-              margin: "4px 0 0",
-            }}
-          >
-            Update product information using supported backend fields only
+          <p style={{ color: T.textSub, fontSize: 12, margin: "4px 0 0" }}>
+            Update product information and replace image if needed
           </p>
         </div>
 
@@ -375,18 +394,9 @@ export default function EditProduct() {
           alignItems: "start",
         }}
       >
-        <div
-          style={{
-            ...card(),
-            padding: "22px 24px",
-          }}
-        >
+        <div style={{ ...card(), padding: "22px 24px" }}>
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 14,
-            }}
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
           >
             <Field label="SKU *">
               <input
@@ -429,6 +439,85 @@ export default function EditProduct() {
                 style={inputStyle()}
               />
             </Field>
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <Field label="Replace Image">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={inputStyle()}
+              />
+            </Field>
+
+            {form.image_preview && (
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: 10,
+                  borderRadius: 12,
+                  background: T.bg3,
+                  border: `1px solid ${T.border}`,
+                }}
+              >
+                <img
+                  src={form.image_preview}
+                  alt="Preview"
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 10,
+                    objectFit: "cover",
+                  }}
+                />
+
+                <div style={{ flex: 1 }}>
+                  <p
+                    style={{
+                      color: T.text,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      margin: 0,
+                    }}
+                  >
+                    {form.image_url ? "New image selected" : "Current image"}
+                  </p>
+                  <p
+                    style={{
+                      color: T.textSub,
+                      fontSize: 11,
+                      margin: "3px 0 0",
+                    }}
+                  >
+                    {form.image_url
+                      ? "It will replace the old product image."
+                      : "Upload a new image only if you want to replace it."}
+                  </p>
+                </div>
+
+                {form.image_url && (
+                  <button
+                    type="button"
+                    onClick={removeNewImage}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      border: "1px solid rgba(248,113,113,0.25)",
+                      background: "rgba(248,113,113,0.08)",
+                      color: T.red,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Ic.Close />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div style={{ marginTop: 14 }}>
@@ -526,17 +615,6 @@ export default function EditProduct() {
             </Field>
           </div>
 
-          <div style={{ marginTop: 14 }}>
-            <Field label="Image URL">
-              <input
-                value={form.image_url}
-                onChange={setField("image_url")}
-                placeholder="https://example.com/product.jpg"
-                style={inputStyle()}
-              />
-            </Field>
-          </div>
-
           <div
             style={{
               marginTop: 22,
@@ -612,25 +690,14 @@ export default function EditProduct() {
                 marginBottom: 14,
               }}
             >
-              {form.image_url ? (
+              {form.image_preview ? (
                 <img
-                  src={form.image_url}
+                  src={form.image_preview}
                   alt={form.product_name || "Product preview"}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               ) : (
-                <span
-                  style={{
-                    fontSize: 38,
-                    opacity: 0.7,
-                  }}
-                >
-                  📦
-                </span>
+                <span style={{ fontSize: 38, opacity: 0.7 }}>📦</span>
               )}
             </div>
 
@@ -832,14 +899,7 @@ function PreviewStat({ label, value }) {
       >
         {label.toUpperCase()}
       </p>
-      <p
-        style={{
-          color: T.text,
-          margin: 0,
-          fontSize: 16,
-          fontWeight: 900,
-        }}
-      >
+      <p style={{ color: T.text, margin: 0, fontSize: 16, fontWeight: 900 }}>
         {value}
       </p>
     </div>

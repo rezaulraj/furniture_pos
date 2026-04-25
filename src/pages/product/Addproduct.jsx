@@ -8,7 +8,8 @@ import { useCategoryStore } from "../../store/categoryStore";
 const EMPTY = {
   sku: "",
   product_name: "",
-  image_url: "",
+  image_url: null,
+  image_preview: "",
   description: "",
   category_id: "",
   cost_price: "",
@@ -57,15 +58,51 @@ export default function AddProduct({ onCancel, onSuccess }) {
     const profit = sell - cost;
     const margin = ((profit / cost) * 100).toFixed(1);
 
-    return {
-      profit,
-      margin,
-    };
+    return { profit, margin };
   }, [form.cost_price, form.selling_price]);
 
   const setField = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
     setFormError("");
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      setForm((prev) => ({
+        ...prev,
+        image_url: null,
+        image_preview: "",
+      }));
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setFormError("Please select a valid image file");
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      setFormError("Image size must be under 3MB");
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      image_url: file,
+      image_preview: URL.createObjectURL(file),
+    }));
+
+    setFormError("");
+  };
+
+  const removeImage = () => {
+    setForm((prev) => ({
+      ...prev,
+      image_url: null,
+      image_preview: "",
+    }));
   };
 
   const validate = () => {
@@ -90,6 +127,7 @@ export default function AddProduct({ onCancel, onSuccess }) {
 
   const handleSubmit = async () => {
     const validationError = validate();
+
     if (validationError) {
       setFormError(validationError);
       return;
@@ -99,7 +137,7 @@ export default function AddProduct({ onCancel, onSuccess }) {
       const payload = {
         sku: form.sku.trim(),
         product_name: form.product_name.trim(),
-        image_url: form.image_url.trim(),
+        image_url: form.image_url,
         description: form.description.trim(),
         category_id: Number(form.category_id),
         cost_price: Number(form.cost_price),
@@ -115,7 +153,7 @@ export default function AddProduct({ onCancel, onSuccess }) {
       setForm(EMPTY);
       onSuccess?.(product);
     } catch {
-      // store error handles UI
+      // productError handles UI
     }
   };
 
@@ -245,7 +283,7 @@ export default function AddProduct({ onCancel, onSuccess }) {
               margin: "4px 0 0",
             }}
           >
-            Clean product form using backend-supported fields only
+            Image upload, category, price and product details
           </p>
         </div>
 
@@ -337,6 +375,80 @@ export default function AddProduct({ onCancel, onSuccess }) {
                 style={inputStyle()}
               />
             </Field>
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <Field label="Upload Image">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={inputStyle()}
+              />
+            </Field>
+
+            {form.image_preview && (
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: 10,
+                  borderRadius: 12,
+                  background: T.bg3,
+                  border: `1px solid ${T.border}`,
+                }}
+              >
+                <img
+                  src={form.image_preview}
+                  alt="Preview"
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 10,
+                    objectFit: "cover",
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <p
+                    style={{
+                      color: T.text,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      margin: 0,
+                    }}
+                  >
+                    Image selected
+                  </p>
+                  <p
+                    style={{
+                      color: T.textSub,
+                      fontSize: 11,
+                      margin: "3px 0 0",
+                    }}
+                  >
+                    It will be uploaded with product data.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    border: "1px solid rgba(248,113,113,0.25)",
+                    background: "rgba(248,113,113,0.08)",
+                    color: T.red,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Ic.Close />
+                </button>
+              </div>
+            )}
           </div>
 
           <div style={{ marginTop: 14 }}>
@@ -434,17 +546,6 @@ export default function AddProduct({ onCancel, onSuccess }) {
             </Field>
           </div>
 
-          <div style={{ marginTop: 14 }}>
-            <Field label="Image URL">
-              <input
-                value={form.image_url}
-                onChange={setField("image_url")}
-                placeholder="https://example.com/product.jpg"
-                style={inputStyle()}
-              />
-            </Field>
-          </div>
-
           <div
             style={{
               marginTop: 22,
@@ -522,9 +623,9 @@ export default function AddProduct({ onCancel, onSuccess }) {
                 marginBottom: 14,
               }}
             >
-              {form.image_url ? (
+              {form.image_preview ? (
                 <img
-                  src={form.image_url}
+                  src={form.image_preview}
                   alt={form.product_name || "Product preview"}
                   style={{
                     width: "100%",

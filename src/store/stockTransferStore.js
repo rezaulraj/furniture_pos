@@ -9,12 +9,13 @@ const normalizeError = (error, fallback) =>
 
 export const useStockTransferStore = create((set) => ({
   transfers: [],
+  currentTransfer: null,
   isLoading: false,
   isSubmitting: false,
+  isUpdating: false,
   error: "",
 
   clearError: () => set({ error: "" }),
-  setError: (error) => set({ error }),
 
   fetchTransfers: async (params = {}) => {
     set({ isLoading: true, error: "" });
@@ -24,8 +25,26 @@ export const useStockTransferStore = create((set) => ({
       set({ transfers, isLoading: false });
       return transfers;
     } catch (error) {
-      const message = normalizeError(error, "Failed to load stock transfers");
-      set({ error: message, isLoading: false });
+      set({
+        error: normalizeError(error, "Failed to load stock transfers"),
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  fetchTransferById: async (id) => {
+    set({ isLoading: true, error: "", currentTransfer: null });
+    try {
+      const res = await api.get(`/transfers/${id}`);
+      const transfer = res.data?.data || null;
+      set({ currentTransfer: transfer, isLoading: false });
+      return transfer;
+    } catch (error) {
+      set({
+        error: normalizeError(error, "Failed to load stock transfer"),
+        isLoading: false,
+      });
       throw error;
     }
   },
@@ -43,8 +62,37 @@ export const useStockTransferStore = create((set) => ({
 
       return transfer;
     } catch (error) {
-      const message = normalizeError(error, "Failed to create stock transfer");
-      set({ error: message, isSubmitting: false });
+      set({
+        error: normalizeError(error, "Failed to create stock transfer"),
+        isSubmitting: false,
+      });
+      throw error;
+    }
+  },
+
+  updateTransferStatus: async (id, payload) => {
+    set({ isUpdating: true, error: "" });
+    try {
+      const res = await api.patch(`/transfers/${id}/status`, payload);
+      const updated = res.data?.data;
+
+      set((state) => ({
+        transfers: state.transfers.map((item) =>
+          item.transfer_id === id ? updated : item,
+        ),
+        currentTransfer:
+          state.currentTransfer?.transfer_id === id
+            ? updated
+            : state.currentTransfer,
+        isUpdating: false,
+      }));
+
+      return updated;
+    } catch (error) {
+      set({
+        error: normalizeError(error, "Failed to update transfer status"),
+        isUpdating: false,
+      });
       throw error;
     }
   },

@@ -36,7 +36,7 @@ export const useInventoryStore = create((set) => ({
   createInventory: async (payload) => {
     set({ isSubmitting: true, error: "" });
     try {
-      const res = await api.post("/inventor", payload);
+      const res = await api.post("/inventory", payload);
       const item = res.data?.data;
 
       set((state) => ({

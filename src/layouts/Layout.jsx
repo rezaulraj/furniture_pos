@@ -41,11 +41,10 @@ const PATH_TITLES = {
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [currentPage, setCurrentPage] = useState("Dashboard");
   const location = useLocation();
 
-  // Apply/remove .dark class on <html>
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);

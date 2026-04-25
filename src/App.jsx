@@ -28,6 +28,9 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import EditProduct from "./pages/product/EditProduct";
 import AllBranches from "./pages/branch/AllBranches";
+import AllUser from "./pages/user/AllUser";
+import AddUser from "./pages/user/AddUser";
+import Role from "./pages/user/Role";
 function App() {
   return (
     <>
@@ -63,6 +66,9 @@ function App() {
             <Route path="/suppliers" element={<AllSuppliers />} />
             <Route path="/suppliers/add" element={<AddSupplier />} />
             <Route path="/stores" element={<AllBranches />} />
+            <Route path="/users" element={<AllUser />} />
+            <Route path="/users/add" element={<AddUser />} />
+            <Route path="/users/roles" element={<Role />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Route>

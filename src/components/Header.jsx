@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useDashboardStore } from "../store/dashboardStore";
 
-// ── Icon helper ───────────────────────────────────────────────────
 const Ico = ({ d, size = 20, stroke = true }) => (
   <svg
     width={size}
@@ -32,7 +32,6 @@ const HIcon = {
       ]}
     />
   ),
-  Search: () => <Ico d={["M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"]} />,
   User: () => (
     <Ico
       d={[
@@ -73,82 +72,40 @@ const HIcon = {
     />
   ),
   Purchase: () => (
-    <Ico
-      d={[
-        "M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z",
-      ]}
-    />
+    <Ico d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
   ),
   ChevDown: () => <Ico d="M19 9l-7 7-7-7" size={16} />,
-  Store: () => <Ico d={["M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"]} />,
+  Store: () => <Ico d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />,
   Report: () => (
-    <Ico
-      d={[
-        "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-      ]}
-    />
+    <Ico d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   ),
 };
 
-// ── Notifications ─────────────────────────────────────────────────
-const NOTIFS = [
-  {
-    id: 1,
-    text: "Low stock: Dining Table (3 left)",
-    time: "5m ago",
-    color: "#f59e0b",
-  },
-  {
-    id: 2,
-    text: "New sale #INV-2041 — ৳ 28,500",
-    time: "12m ago",
-    color: "#22c55e",
-  },
-  {
-    id: 3,
-    text: "PO #PO-0892 delivered — 24 items",
-    time: "1h ago",
-    color: "#3b82f6",
-  },
-  {
-    id: 4,
-    text: "Return request #RT-0041 pending",
-    time: "2h ago",
-    color: "#ef4444",
-  },
-];
-
-// ── Stats Bar Data ────────────────────────────────────────────────
-const STATS = [
-  { label: "Today's Sales", value: "৳ 1,24,500", up: true, delta: "+12%" },
-  { label: "Purchases", value: "৳ 68,200", up: false, delta: "-3%" },
-  { label: "Due Amount", value: "৳ 34,800", up: true, delta: "+5%" },
-  { label: "Low Stock Items", value: "7 Items", up: false, delta: "Critical" },
-];
+const money = (v) => `৳ ${Number(v || 0).toLocaleString()}`;
 
 const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const { summary, fetchDashboardSummary } = useDashboardStore();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchVal, setSearchVal] = useState("");
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
-  const searchRef = useRef(null);
+
+  useEffect(() => {
+    fetchDashboardSummary();
+  }, [fetchDashboardSummary]);
 
   useEffect(() => {
     const h = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setProfileOpen(false);
       }
+
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
-      }
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setSearchOpen(false);
       }
     };
 
@@ -156,11 +113,11 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const displayName = user?.full_name || "User";
+  const displayName = user?.full_name || user?.username || "User";
   const displayEmail = user?.email || "no-email@example.com";
   const displayRole = user?.role?.role_name || "No Role";
   const displayStore = user?.store?.store_name || "No Store";
-  const avatarLetter = user?.full_name?.charAt(0)?.toUpperCase() || "U";
+  const avatarLetter = displayName?.charAt(0)?.toUpperCase() || "U";
 
   const formattedRole =
     displayRole.charAt(0).toUpperCase() + displayRole.slice(1);
@@ -172,21 +129,16 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
         ? "#3b82f6"
         : "#22c55e";
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
-
-  // ── Color tokens ──────────────────────────────────────────────
-  const bg = darkMode ? "#040d1c" : "#f0f7f4";
+  const bg = darkMode ? "#040d1c" : "#ffffff";
+  const subBg = darkMode ? "#060f22" : "#f7fcf9";
   const borderClr = darkMode
     ? "rgba(255,255,255,0.06)"
     : "rgba(22,120,80,0.12)";
   const textPrimary = darkMode ? "#f0faff" : "#0a1f14";
   const textSec = darkMode ? "#a8d4c2" : "#3d7a5a";
-  const textMuted = darkMode ? "#4a7a62" : "#6aaa88";
+  const textMuted = darkMode ? "#5a8a72" : "#6aaa88";
   const accent = "#ac5208";
-  const accentHover = "#c96010";
+  const accentHover = darkMode ? "#c96010" : "#8f4406";
   const green = darkMode ? "#22c55e" : "#16a34a";
   const cardBg = darkMode ? "#0a1628" : "#ffffff";
   const cardBorder = darkMode
@@ -194,6 +146,54 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
     : "rgba(22,120,80,0.12)";
 
   const font = "'Open Sans', sans-serif";
+
+  const STATS = [
+    {
+      label: "Total Sales",
+      value: money(summary?.revenue),
+      up: true,
+      delta: `${summary?.sales_count || 0} sales`,
+    },
+    {
+      label: "Purchases",
+      value: money(summary?.purchases_total),
+      up: false,
+      delta: "Cost",
+    },
+    {
+      label: "Due Amount",
+      value: money(summary?.due_revenue),
+      up: false,
+      delta: "Pending",
+    },
+    {
+      label: "Low Stock Items",
+      value: `${summary?.low_stock_alerts || 0} Items`,
+      up: false,
+      delta: "Alert",
+    },
+  ];
+
+  const notifications = [
+    {
+      id: 1,
+      text: `Low stock items: ${summary?.low_stock_alerts || 0}`,
+      time: "Live",
+      color: "#f59e0b",
+    },
+    {
+      id: 2,
+      text: `Sales count: ${summary?.sales_count || 0}`,
+      time: "Live",
+      color: "#22c55e",
+    },
+    {
+      id: 3,
+      text: `Due revenue: ${money(summary?.due_revenue)}`,
+      time: "Live",
+      color: "#ef4444",
+    },
+  ];
 
   const btnBase = {
     display: "flex",
@@ -218,6 +218,11 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
     { icon: <HIcon.Settings />, label: "Settings" },
   ];
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div style={{ fontFamily: font }}>
       <header
@@ -233,42 +238,27 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
           zIndex: 20,
         }}
       >
-        <button
-          style={btnBase}
-          onClick={onToggleSidebar}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(172,82,8,0.18)";
-            e.currentTarget.style.color = accentHover;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = darkMode
-              ? "rgba(255,255,255,0.04)"
-              : "rgba(22,120,80,0.06)";
-            e.currentTarget.style.color = textSec;
-          }}
-        >
+        <button style={btnBase} onClick={onToggleSidebar}>
           <HIcon.Menu />
         </button>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span
-              style={{
-                color: textMuted,
-                fontSize: 11,
-                letterSpacing: "0.08em",
-                fontWeight: 500,
-              }}
-            >
-              CraftPOS
-            </span>
-          </div>
+          <span
+            style={{
+              color: textMuted,
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              fontWeight: 600,
+            }}
+          >
+            CraftPOS
+          </span>
+
           <h1
             style={{
               color: textPrimary,
               fontSize: 17,
               fontWeight: 800,
-              letterSpacing: "0.01em",
               lineHeight: 1,
               margin: 0,
             }}
@@ -280,6 +270,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
         <div style={{ flex: 1 }} />
 
         <button
+          onClick={() => navigate("/sales/new")}
           style={{
             display: "flex",
             alignItems: "center",
@@ -294,23 +285,14 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
             fontWeight: 700,
             fontSize: 12,
             cursor: "pointer",
-            letterSpacing: "0.03em",
-            boxShadow: "0 3px 12px rgba(172,82,8,0.4)",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = accentHover;
-            e.currentTarget.style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = accent;
-            e.currentTarget.style.transform = "translateY(0)";
+            boxShadow: "0 3px 12px rgba(172,82,8,0.28)",
           }}
         >
           <HIcon.Sale /> New Sale
         </button>
 
         <button
+          onClick={() => navigate("/purchases/new")}
           style={{
             display: "flex",
             alignItems: "center",
@@ -329,51 +311,28 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
             fontWeight: 700,
             fontSize: 12,
             cursor: "pointer",
-            letterSpacing: "0.03em",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = darkMode
-              ? "rgba(34,197,94,0.16)"
-              : "rgba(22,163,74,0.2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = darkMode
-              ? "rgba(34,197,94,0.08)"
-              : "rgba(22,163,74,0.1)";
           }}
         >
           <HIcon.Purchase /> Purchase
         </button>
 
         <div ref={notifRef} style={{ position: "relative" }}>
-          <button
-            style={btnBase}
-            onClick={() => setNotifOpen(!notifOpen)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(172,82,8,0.18)";
-              e.currentTarget.style.color = accentHover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = darkMode
-                ? "rgba(255,255,255,0.04)"
-                : "rgba(22,120,80,0.06)";
-              e.currentTarget.style.color = textSec;
-            }}
-          >
+          <button style={btnBase} onClick={() => setNotifOpen(!notifOpen)}>
             <HIcon.Bell />
-            <span
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 7,
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "#ef4444",
-                border: `1.5px solid ${bg}`,
-              }}
-            />
+            {(summary?.low_stock_alerts || 0) > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  right: 7,
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#ef4444",
+                  border: `1.5px solid ${bg}`,
+                }}
+              />
+            )}
           </button>
 
           {notifOpen && (
@@ -408,19 +367,13 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                 >
                   Notifications
                 </span>
-                <span
-                  style={{
-                    color: green,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  Mark all read
+
+                <span style={{ color: green, fontSize: 11, fontWeight: 700 }}>
+                  Live
                 </span>
               </div>
 
-              {NOTIFS.map((n) => (
+              {notifications.map((n) => (
                 <div
                   key={n.id}
                   style={{
@@ -429,17 +382,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                     display: "flex",
                     alignItems: "flex-start",
                     gap: 10,
-                    cursor: "pointer",
-                    transition: "background 0.15s",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = darkMode
-                      ? "rgba(255,255,255,0.04)"
-                      : "rgba(22,120,80,0.05)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "transparent")
-                  }
                 >
                   <span
                     style={{
@@ -451,18 +394,20 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                       marginTop: 5,
                     }}
                   />
+
                   <div style={{ flex: 1 }}>
                     <p
                       style={{
                         color: textPrimary,
                         fontSize: 12,
-                        fontWeight: 500,
+                        fontWeight: 600,
                         margin: 0,
                         lineHeight: 1.4,
                       }}
                     >
                       {n.text}
                     </p>
+
                     <span style={{ color: textMuted, fontSize: 10 }}>
                       {n.time}
                     </span>
@@ -472,14 +417,15 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
 
               <div style={{ padding: "10px 16px", textAlign: "center" }}>
                 <span
+                  onClick={() => navigate("/inventory/low-stock")}
                   style={{
                     color: green,
                     fontSize: 12,
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: "pointer",
                   }}
                 >
-                  View all notifications
+                  View stock alerts
                 </span>
               </div>
             </div>
@@ -489,16 +435,6 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
         <button
           style={btnBase}
           onClick={() => setDarkMode && setDarkMode(!darkMode)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(172,82,8,0.18)";
-            e.currentTarget.style.color = accentHover;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = darkMode
-              ? "rgba(255,255,255,0.04)"
-              : "rgba(22,120,80,0.06)";
-            e.currentTarget.style.color = textSec;
-          }}
         >
           {darkMode ? <HIcon.Sun /> : <HIcon.Moon />}
         </button>
@@ -519,17 +455,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
               border: `1px solid ${profileOpen ? borderClr : "transparent"}`,
               borderRadius: 10,
               padding: "5px 10px 5px 5px",
-              transition: "all 0.2s",
               fontFamily: font,
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = darkMode
-                ? "rgba(255,255,255,0.06)"
-                : "rgba(22,120,80,0.08)")
-            }
-            onMouseLeave={(e) => {
-              if (!profileOpen)
-                e.currentTarget.style.background = "transparent";
             }}
           >
             <div
@@ -541,8 +467,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 2px 8px rgba(172,82,8,0.4)",
-                flexShrink: 0,
+                boxShadow: "0 2px 8px rgba(172,82,8,0.35)",
               }}
             >
               <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>
@@ -562,12 +487,13 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
               >
                 {displayName}
               </p>
+
               <p style={{ color: textSec, fontSize: 10, margin: 0 }}>
                 {formattedRole}
               </p>
             </div>
 
-            <span style={{ color: textMuted, marginLeft: 2 }}>
+            <span style={{ color: textMuted }}>
               <HIcon.ChevDown />
             </span>
           </button>
@@ -579,7 +505,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                 position: "absolute",
                 right: 0,
                 top: 50,
-                width: 240,
+                width: 250,
                 background: cardBg,
                 borderRadius: 12,
                 border: `1px solid ${cardBorder}`,
@@ -611,7 +537,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                   style={{
                     color: textSec,
                     fontSize: 11,
-                    margin: "4px 0 0 0",
+                    margin: "4px 0 0",
                     wordBreak: "break-word",
                   }}
                 >
@@ -622,7 +548,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                   style={{
                     color: textMuted,
                     fontSize: 11,
-                    margin: "4px 0 0 0",
+                    margin: "4px 0 0",
                     wordBreak: "break-word",
                   }}
                 >
@@ -636,7 +562,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                     background: `${roleBadgeColor}20`,
                     color: roleBadgeColor,
                     fontSize: 9,
-                    fontWeight: 700,
+                    fontWeight: 800,
                     padding: "3px 8px",
                     borderRadius: 20,
                     border: `1px solid ${roleBadgeColor}50`,
@@ -663,18 +589,9 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                     color: textSec,
                     fontSize: 13,
                     fontWeight: 500,
-                    transition: "background 0.15s",
                     textAlign: "left",
                     fontFamily: font,
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = darkMode
-                      ? "rgba(255,255,255,0.05)"
-                      : "rgba(22,120,80,0.07)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "none")
-                  }
                 >
                   {m.icon}
                   <span>{m.label}</span>
@@ -701,17 +618,10 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                   cursor: "pointer",
                   color: "#ef4444",
                   fontSize: 13,
-                  fontWeight: 600,
-                  transition: "background 0.15s",
+                  fontWeight: 700,
                   textAlign: "left",
                   fontFamily: font,
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "rgba(239,68,68,0.08)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "none")
-                }
               >
                 <HIcon.Logout />
                 <span>Sign Out</span>
@@ -723,11 +633,10 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
 
       <div
         style={{
-          background: darkMode ? "#060f22" : "#e4f0eb",
+          background: subBg,
           borderBottom: `1px solid ${borderClr}`,
           padding: "0 20px",
           display: "flex",
-          gap: 0,
           overflowX: "auto",
         }}
       >
@@ -752,11 +661,12 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                   fontSize: 10,
                   margin: 0,
                   letterSpacing: "0.06em",
-                  fontWeight: 600,
+                  fontWeight: 700,
                 }}
               >
                 {s.label.toUpperCase()}
               </p>
+
               <p
                 style={{
                   color: textPrimary,
@@ -772,7 +682,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
             <span
               style={{
                 fontSize: 10,
-                fontWeight: 700,
+                fontWeight: 800,
                 padding: "2px 7px",
                 borderRadius: 20,
                 background: s.up

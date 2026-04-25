@@ -8,45 +8,26 @@ const normalizeError = (error, fallback) =>
   fallback;
 
 export const useDashboardStore = create((set) => ({
-  stats: null,
-  recentSales: [],
-  recentPurchases: [],
+  summary: null,
   isLoading: false,
   error: "",
 
   clearError: () => set({ error: "" }),
-  setError: (error) => set({ error }),
 
-  fetchDashboardStats: async (params = {}) => {
+  fetchDashboardSummary: async (params = {}) => {
     set({ isLoading: true, error: "" });
+
     try {
-      const res = await api.get("/dashboard/stats", { params });
-      const stats = res.data?.data || null;
-      set({ stats, isLoading: false });
-      return stats;
+      const res = await api.get("/dashboard/summary", { params });
+      const summary = res.data?.data || null;
+
+      set({ summary, isLoading: false });
+      return summary;
     } catch (error) {
-      const message = normalizeError(error, "Failed to load dashboard stats");
-      set({ error: message, isLoading: false });
-      throw error;
-    }
-  },
-
-  fetchRecentActivities: async () => {
-    set({ isLoading: true, error: "" });
-    try {
-      const [salesRes, purchasesRes] = await Promise.all([
-        api.get("/sales", { params: { limit: 5 } }),
-        api.get("/purchases", { params: { limit: 5 } }),
-      ]);
-      
-      set({ 
-        recentSales: salesRes.data?.data || [], 
-        recentPurchases: purchasesRes.data?.data || [],
-        isLoading: false 
+      set({
+        error: normalizeError(error, "Failed to load dashboard summary"),
+        isLoading: false,
       });
-    } catch (error) {
-      const message = normalizeError(error, "Failed to load recent activities");
-      set({ error: message, isLoading: false });
       throw error;
     }
   },

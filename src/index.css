@@ -1,0 +1,176 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+/* ── CSS Variables ─────────────────────────────────────── */
+:root {
+  --font-base: "Open Sans", sans-serif;
+
+  /* Light mode */
+  --bg-base: #f0f7f4;
+  --bg-secondary: #e4f0eb;
+  --surface: #ffffff;
+  --surface-alt: #f7fcf9;
+  --border: rgba(22, 120, 80, 0.15);
+  --text-primary: #0a1f14;
+  --text-secondary: #3d7a5a;
+  --text-muted: #6aaa88;
+  --accent: #ac5208;
+  --accent-hover: #8f4406;
+  --accent-light: rgba(172, 82, 8, 0.12);
+  --green: #16a34a;
+  --green-light: rgba(22, 163, 74, 0.12);
+  --scrollbar: #6aaa8880;
+}
+
+.dark {
+  color-scheme: dark;
+  /* Dark mode — exact spec */
+  --bg-base: #040d1c;
+  --bg-secondary: #060f22;
+  --surface: #0a1628;
+  --surface-alt: #0d1e35;
+  --border: rgba(255, 255, 255, 0.07);
+  --text-primary: #f0faff;
+  --text-secondary: #a8d4c2;
+  --text-muted: #5a8a72;
+  --accent: #ac5208;
+  --accent-hover: #c96010;
+  --accent-light: rgba(172, 82, 8, 0.18);
+  --green: #22c55e;
+  --green-light: rgba(34, 197, 94, 0.12);
+  --scrollbar: #ac520840;
+}
+
+/* ── Base Reset ────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  font-family: var(--font-base);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Smooth transitions ────────────────────────────────── */
+* {
+  transition-property:
+    background-color, border-color, color, fill, stroke, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ── Custom scrollbar utilities ────────────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+@layer utilities {
+  .scrollbar-w-2::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+  .scrollbar-track-base::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thumb-accent::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 9999px;
+  }
+}
+
+/* ── Animations ────────────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pulse-green {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+.animate-slide-up {
+  animation: slideUp 0.25s ease-out;
+}
+
+/* ── Number input ──────────────────────────────────────── */
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/* ── Accent button ─────────────────────────────────────── */
+.btn-accent {
+  background: var(--accent);
+  color: #ffffff;
+  font-family: var(--font-base);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
+}
+.btn-accent:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(172, 82, 8, 0.4);
+}
+
+/* ── Green badge pulse ─────────────────────────────────── */
+.live-badge {
+  animation: pulse-green 2s infinite;
+}

@@ -1,0 +1,76 @@
+import "./App.css";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Layout from "./layouts/Layout";
+import DashboardPage from "./pages/dashboard/DashboardPage";
+import NewSalePage from "./pages/sale-module/NewSalePage";
+import SaleHistoryPage from "./pages/sale-module/SaleHistoryPage";
+import SaleReturnsPage from "./pages/sale-module/SaleReturnsPage";
+import InstallmentsPage from "./pages/sale-module/InstallmentsPage";
+import NewPurchase from "./pages/puchase-module/NewPurchase";
+import PurchaseHistory from "./pages/puchase-module/PurchaseHistory";
+import PurchaseReturn from "./pages/puchase-module/PurchaseReturn";
+import NotFoundPage from "./components/NotFoundPage";
+import StockOverview from "./pages/inventory/Stockoverview";
+import StockAlert from "./pages/inventory/Stockalert";
+import DamageStock from "./pages/inventory/Damagestock";
+import StockTransfer from "./pages/inventory/Stocktransfer";
+import Products from "./pages/product/Products";
+import AddProduct from "./pages/product/Addproduct";
+import Categories from "./pages/product/Categories";
+import AllCustomers from "./pages/customer/Allcustomers";
+import AddCustomer from "./pages/customer/Addcustomer";
+import AllSuppliers from "./pages/supplier/Allsuppliers";
+import AddSupplier from "./pages/supplier/Addsupplier";
+import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
+import AuthLayout from "./components/auth/AuthLayout";
+import AuthGuard from "./components/auth/AuthGuard";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import EditProduct from "./pages/product/EditProduct";
+import AllBranches from "./pages/branch/AllBranches";
+function App() {
+  return (
+    <>
+      <Routes>
+        <Route element={<PublicOnlyRoute />}>
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
+        </Route>
+
+        <Route element={<AuthGuard />}>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/sales/new" element={<NewSalePage />} />
+            <Route path="/sales/history" element={<SaleHistoryPage />} />
+            <Route path="/sales/returns" element={<SaleReturnsPage />} />
+            <Route path="/sales/installments" element={<InstallmentsPage />} />
+            <Route path="/purchases/new" element={<NewPurchase />} />
+            <Route path="/purchases/history" element={<PurchaseHistory />} />
+            <Route path="/purchases/returns" element={<PurchaseReturn />} />
+            <Route path="/inventory/overview" element={<StockOverview />} />
+            <Route path="/inventory/low-stock" element={<StockAlert />} />
+            <Route path="/inventory/transfer" element={<StockTransfer />} />
+            <Route path="/inventory/damage" element={<DamageStock />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/add" element={<AddProduct />} />
+            <Route path="/products/edit/:id" element={<EditProduct />} />
+            <Route path="/products/categories" element={<Categories />} />
+            <Route path="/customers" element={<AllCustomers />} />
+            <Route path="/customers/add" element={<AddCustomer />} />
+            <Route path="/suppliers" element={<AllSuppliers />} />
+            <Route path="/suppliers/add" element={<AddSupplier />} />
+            <Route path="/stores" element={<AllBranches />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </>
+  );
+}
+
+export default App;

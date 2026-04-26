@@ -78,7 +78,7 @@ const ViewModal = ({ product, onClose, onEdit }) => {
               >
                 {product?.image_url ? (
                   <img
-                    src={product.image_url}
+                    src={`http://localhost:5000${product.image_url}`}
                     alt={product.product_name}
                     style={{
                       width: "100%",
@@ -810,7 +810,7 @@ export default function Products() {
                     >
                       {p.image_url ? (
                         <img
-                          src={p.image_url}
+                          src={`http://localhost:5000${p.image_url}`}
                           alt={p.product_name}
                           style={{
                             width: "100%",
@@ -1062,7 +1062,7 @@ export default function Products() {
                           >
                             {p.image_url ? (
                               <img
-                                src={p.image_url}
+                                src={`http://localhost:5000${p.image_url}`}
                                 alt={p.product_name}
                                 style={{
                                   width: "100%",

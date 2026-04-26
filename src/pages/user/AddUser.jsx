@@ -5,6 +5,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useUserStore } from "../../store/userStore";
 import { useBranchStore } from "../../store/branchStore";
+import { useZoneStore } from "../../store/zoneStore";
 
 const ROLES = [
   { role_id: 1, role_name: "admin", icon: "🛡️", desc: "Full system access" },
@@ -12,7 +13,7 @@ const ROLES = [
     role_id: 2,
     role_name: "manager",
     icon: "📊",
-    desc: "Manage store operations",
+    desc: "Manage stores in a zone",
   },
   {
     role_id: 3,
@@ -30,6 +31,7 @@ const EMPTY = {
   phone: "",
   role_id: "",
   store_id: "",
+  zone_id: "",
   is_active: true,
 };
 
@@ -50,6 +52,7 @@ export default function AddUser() {
   } = useUserStore();
 
   const { branches, fetchBranches } = useBranchStore();
+  const { zones, fetchZones } = useZoneStore();
 
   const [form, setForm] = useState(EMPTY);
   const [formError, setFormError] = useState("");
@@ -57,8 +60,9 @@ export default function AddUser() {
 
   useEffect(() => {
     fetchBranches({ is_active: true });
+    fetchZones();
     clearError?.();
-  }, [fetchBranches, clearError]);
+  }, [fetchBranches, fetchZones, clearError]);
 
   useEffect(() => {
     if (isEdit) fetchUserById(userId);
@@ -74,6 +78,7 @@ export default function AddUser() {
         phone: currentUser.phone || "",
         role_id: currentUser.role_id ? String(currentUser.role_id) : "",
         store_id: currentUser.store_id ? String(currentUser.store_id) : "",
+        zone_id: currentUser.zone_id ? String(currentUser.zone_id) : "",
         is_active: Boolean(currentUser.is_active),
       });
     }
@@ -105,7 +110,10 @@ export default function AddUser() {
       return "Password must be at least 6 characters";
     if (!form.full_name.trim()) return "Full name is required";
     if (!form.role_id) return "Role is required";
-    if (!form.store_id) return "Store is required";
+
+    if (Number(form.role_id) === 3 && !form.store_id) return "Store is required for Seller";
+    if (Number(form.role_id) === 2 && !form.zone_id) return "Zone is required for Manager";
+
     return "";
   };
 
@@ -120,7 +128,8 @@ export default function AddUser() {
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         role_id: Number(form.role_id),
-        store_id: Number(form.store_id),
+        store_id: form.store_id ? Number(form.store_id) : undefined,
+        zone_id: form.zone_id ? Number(form.zone_id) : undefined,
         is_active: form.is_active,
       };
 
@@ -343,22 +352,43 @@ export default function AddUser() {
             </Field>
           </div>
 
-          <div style={{ marginTop: 14 }}>
-            <Field label="Store / Branch *">
-              <select
-                value={form.store_id}
-                onChange={setField("store_id")}
-                style={inputStyle()}
-              >
-                <option value="">Select store</option>
-                {branches.map((b) => (
-                  <option key={b.store_id} value={b.store_id}>
-                    {b.store_name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
+          {(Number(form.role_id) === 3 || Number(form.role_id) === 1) && (
+            <div style={{ marginTop: 14 }}>
+              <Field label="Assign Store (Required for Seller)">
+                <select
+                  value={form.store_id}
+                  onChange={setField("store_id")}
+                  style={inputStyle()}
+                >
+                  <option value="">Select store</option>
+                  {branches.map((b) => (
+                    <option key={b.store_id} value={b.store_id}>
+                      {b.store_name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          )}
+
+          {(Number(form.role_id) === 2 || Number(form.role_id) === 1) && (
+            <div style={{ marginTop: 14 }}>
+              <Field label="Assign Zone (Required for Manager)">
+                <select
+                  value={form.zone_id}
+                  onChange={setField("zone_id")}
+                  style={inputStyle()}
+                >
+                  <option value="">Select zone</option>
+                  {zones.map((z) => (
+                    <option key={z.zone_id} value={z.zone_id}>
+                      {z.zone_name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          )}
 
           {isEdit && (
             <label

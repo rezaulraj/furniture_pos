@@ -24,6 +24,7 @@ const EMPTY_FORM = {
   discount_value: 0,
   tax_amount: 0,
   payment_status: "pending",
+  payment_method: "cash",
   paid_amount: 0,
   payment_terms: "",
   status: "ordered",
@@ -184,6 +185,7 @@ export default function NewPurchase() {
         tax_amount: totals.taxAmount,
         total_amount: totals.totalAmount,
         payment_status: form.payment_status,
+        payment_method: form.payment_method,
         paid_amount: totals.paidAmount,
         due_amount: totals.dueAmount,
         payment_terms: form.payment_terms || null,
@@ -453,6 +455,17 @@ export default function NewPurchase() {
               onChange={setField("paid_amount")}
               style={inputStyle()}
             />
+          </Field>
+
+          <Field label="Payment Method">
+            <select
+              value={form.payment_method}
+              onChange={setField("payment_method")}
+              style={inputStyle()}
+            >
+              <option value="cash">Cash</option>
+              <option value="bank">Bank</option>
+            </select>
           </Field>
 
           <Field label="Payment Terms">

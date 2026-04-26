@@ -2,13 +2,16 @@ import "./App.css";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./layouts/Layout";
 import DashboardPage from "./pages/dashboard/DashboardPage";
-import NewSalePage from "./pages/sale-module/NewSalePage";
-import SaleHistoryPage from "./pages/sale-module/SaleHistoryPage";
-import SaleReturnsPage from "./pages/sale-module/SaleReturnsPage";
-import InstallmentsPage from "./pages/sale-module/InstallmentsPage";
-import NewPurchase from "./pages/puchase-module/NewPurchase";
-import PurchaseHistory from "./pages/puchase-module/PurchaseHistory";
-import PurchaseReturn from "./pages/puchase-module/PurchaseReturn";
+import NewSalePage from "./pages/sale/NewSalePage";
+import SaleHistoryPage from "./pages/sale/SaleHistoryPage";
+import SaleReturnsPage from "./pages/sale/SaleReturnsPage";
+import InstallmentsPage from "./pages/sale/InstallmentsPage";
+import NewPurchase from "./pages/puchase/NewPurchase";
+import PurchaseHistory from "./pages/puchase/PurchaseHistory";
+import PurchaseReturn from "./pages/puchase/PurchaseReturn";
+import AllExpenses from "./pages/expense/AllExpenses";
+import AddExpense from "./pages/expense/AddExpense";
+import ReportsOverview from "./pages/report/ReportsOverview";
 import NotFoundPage from "./components/NotFoundPage";
 import StockOverview from "./pages/inventory/Stockoverview";
 import StockAlert from "./pages/inventory/Stockalert";
@@ -31,6 +34,11 @@ import AllBranches from "./pages/branch/AllBranches";
 import AllUser from "./pages/user/AllUser";
 import AddUser from "./pages/user/AddUser";
 import Role from "./pages/user/Role";
+import AddStore from "./pages/branch/AddStore";
+import SalesReport from "./pages/report/SalesReport";
+import PurchaseReport from "./pages/report/PurchaseReport";
+import InventoryReport from "./pages/report/InventoryReport";
+import ExpenseReport from "./pages/report/ExpenseReport";
 function App() {
   return (
     <>
@@ -65,7 +73,15 @@ function App() {
             <Route path="/customers/add" element={<AddCustomer />} />
             <Route path="/suppliers" element={<AllSuppliers />} />
             <Route path="/suppliers/add" element={<AddSupplier />} />
+            <Route path="/expenses" element={<AllExpenses />} />
+            <Route path="/expenses/add" element={<AddExpense />} />
+            <Route path="/reports" element={<ReportsOverview />} />
+            <Route path="/reports/sales" element={<SalesReport />} />
+            <Route path="/reports/purchase" element={<PurchaseReport />} />
+            <Route path="/reports/inventory" element={<InventoryReport />} />
+            <Route path="/reports/expenses" element={<ExpenseReport />} />
             <Route path="/stores" element={<AllBranches />} />
+            <Route path="/stores/add" element={<AddStore />} />
             <Route path="/users" element={<AllUser />} />
             <Route path="/users/add" element={<AddUser />} />
             <Route path="/users/roles" element={<Role />} />

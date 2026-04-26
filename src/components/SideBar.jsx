@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
 
 // ── SVG Icon helper ─────────────────────────────────────────────────
 const Icon = ({ d, size = 20, stroke = false, className = "" }) => (
@@ -229,7 +230,7 @@ const NAV = [
     icon: <Icons.Report />,
     subBar: [
       { id: 91, label: "Sales Report", path: "/reports/sales" },
-      { id: 92, label: "Purchase Report", path: "/reports/purchases" },
+      { id: 92, label: "Purchase Report", path: "/reports/purchase" },
       { id: 93, label: "Inventory Report", path: "/reports/inventory" },
       { id: 94, label: "Expense Report", path: "/reports/expenses" },
       { id: 95, label: "Profit & Loss", path: "/reports/profit-loss" },
@@ -261,8 +262,28 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
   const [openSubmenus, setOpenSubmenus] = useState({ 2: true });
   const [hoveredItem, setHoveredItem] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const { hasRole } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const filteredNav = NAV.filter(item => {
+    const role = useAuthStore.getState().user?.role?.role_name?.toLowerCase();
+    
+    // Admin sees everything
+    if (role === 'admin') return true;
+    
+    // Manager sees everything except User/Store management
+    if (role === 'manager') {
+      return !['Users', 'Stores'].includes(item.label);
+    }
+    
+    // Seller sees restricted set
+    if (role === 'seller') {
+      return ['Dashboard', 'Sales', 'Purchases', 'Inventory', 'Products', 'Customers', 'Suppliers'].includes(item.label);
+    }
+    
+    return false;
+  });
 
   const toggle = (id) => setOpenSubmenus((p) => ({ ...p, [id]: !p[id] }));
   const handleNav = (path) => {
@@ -526,7 +547,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
             gap: 2,
           }}
         >
-          {NAV.map((item) => {
+          {filteredNav.map((item) => {
             const active = isActive(item);
             return (
               <li key={item.id}>

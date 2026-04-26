@@ -30,21 +30,30 @@ export const useRefundStore = create((set) => ({
     }
   },
 
-  processRefund: async (payload) => {
-    set({ isSubmitting: true, error: "" });
+  fetchSalesRefundById: async (id) => {
+    set({ isLoading: true, error: "" });
     try {
-      const res = await api.post("/refunds", payload);
+      const res = await api.get(`/refunds/sales/${id}`);
       const refund = res.data?.data;
-
-      set((state) => ({
-        refunds: [refund, ...state.refunds],
-        isSubmitting: false,
-      }));
-
+      set({ isLoading: false });
       return refund;
     } catch (error) {
-      const message = normalizeError(error, "Failed to process refund");
-      set({ error: message, isSubmitting: false });
+      const message = normalizeError(error, "Failed to load sales refund detail");
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  fetchPurchaseRefundById: async (id) => {
+    set({ isLoading: true, error: "" });
+    try {
+      const res = await api.get(`/refunds/purchase/${id}`);
+      const refund = res.data?.data;
+      set({ isLoading: false });
+      return refund;
+    } catch (error) {
+      const message = normalizeError(error, "Failed to load purchase refund detail");
+      set({ error: message, isLoading: false });
       throw error;
     }
   },

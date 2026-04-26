@@ -30,6 +30,20 @@ export const useDamageStockStore = create((set) => ({
     }
   },
 
+  fetchDamageById: async (id) => {
+    set({ isLoading: true, error: "" });
+    try {
+      const res = await api.get(`/damage-stock/${id}`);
+      const damageStock = res.data?.data;
+      set({ isLoading: false });
+      return damageStock;
+    } catch (error) {
+      const message = normalizeError(error, "Failed to load damage stock detail");
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
   reportDamage: async (payload) => {
     set({ isSubmitting: true, error: "" });
     try {
@@ -44,6 +58,27 @@ export const useDamageStockStore = create((set) => ({
       return damageStock;
     } catch (error) {
       const message = normalizeError(error, "Failed to report damage stock");
+      set({ error: message, isSubmitting: false });
+      throw error;
+    }
+  },
+
+  updateDamageStatus: async (id, status) => {
+    set({ isSubmitting: true, error: "" });
+    try {
+      const res = await api.patch(`/damage-stock/${id}/status`, { status });
+      const updated = res.data?.data;
+
+      set((state) => ({
+        damageStocks: state.damageStocks.map((item) =>
+          item.damage_id === id ? updated : item,
+        ),
+        isSubmitting: false,
+      }));
+
+      return updated;
+    } catch (error) {
+      const message = normalizeError(error, "Failed to update damage status");
       set({ error: message, isSubmitting: false });
       throw error;
     }

@@ -30,10 +30,38 @@ export const useInstallmentStore = create((set) => ({
     }
   },
 
+  fetchInstallmentById: async (id) => {
+    set({ isLoading: true, error: "" });
+    try {
+      const res = await api.get(`/installments/${id}`);
+      const installment = res.data?.data;
+      set({ isLoading: false });
+      return installment;
+    } catch (error) {
+      const message = normalizeError(error, "Failed to load installment");
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  createInstallmentPlan: async (payload) => {
+    set({ isSubmitting: true, error: "" });
+    try {
+      const res = await api.post("/installments/plan", payload);
+      const data = res.data?.data;
+      set({ isSubmitting: false });
+      return data;
+    } catch (error) {
+      const message = normalizeError(error, "Failed to create installment plan");
+      set({ error: message, isSubmitting: false });
+      throw error;
+    }
+  },
+
   payInstallment: async (installmentId, payload) => {
     set({ isSubmitting: true, error: "" });
     try {
-      const res = await api.post(`/installments/${installmentId}/pay`, payload);
+      const res = await api.post(`/installments/${installmentId}/payments`, payload);
       const updatedInstallment = res.data?.data;
 
       set((state) => ({

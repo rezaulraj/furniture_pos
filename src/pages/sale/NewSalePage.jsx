@@ -45,6 +45,8 @@ export default function NewSalePage() {
   const [formError, setFormError] = useState("");
   const [savedSale, setSavedSale] = useState(null);
 
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
   const [newCustomer, setNewCustomer] = useState({
     full_name: "",
     phone: "",
@@ -254,6 +256,7 @@ export default function NewSalePage() {
         tax_amount: taxAmount,
         total_amount: totalAmount,
         payment_status: paymentStatus,
+        payment_method: paymentMethod,
         paid_amount: paid,
         due_amount: due,
         installment_terms: null,
@@ -804,6 +807,17 @@ export default function NewSalePage() {
                 placeholder={String(totalAmount)}
                 style={inputStyle()}
               />
+            </Field>
+
+            <Field label="Payment Method">
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                style={inputStyle()}
+              >
+                <option value="cash">Cash</option>
+                <option value="bank">Bank</option>
+              </select>
             </Field>
 
             <Field label="Notes">

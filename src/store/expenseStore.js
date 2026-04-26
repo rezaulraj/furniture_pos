@@ -31,6 +31,20 @@ export const useExpenseStore = create((set) => ({
     }
   },
 
+  fetchExpenseById: async (id) => {
+    set({ isLoading: true, error: "" });
+    try {
+      const res = await api.get(`/expenses/${id}`);
+      const expense = res.data?.data;
+      set({ isLoading: false });
+      return expense;
+    } catch (error) {
+      const message = normalizeError(error, "Failed to load expense");
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
   createExpense: async (payload) => {
     set({ isSubmitting: true, error: "" });
     try {
@@ -50,10 +64,10 @@ export const useExpenseStore = create((set) => ({
     }
   },
 
-  updateExpense: async (expenseId, payload) => {
+  updateExpenseStatus: async (expenseId, status) => {
     set({ isSubmitting: true, error: "" });
     try {
-      const res = await api.patch(`/expenses/${expenseId}`, payload);
+      const res = await api.patch(`/expenses/${expenseId}/status`, { status });
       const expense = res.data?.data;
 
       set((state) => ({
@@ -65,7 +79,28 @@ export const useExpenseStore = create((set) => ({
 
       return expense;
     } catch (error) {
-      const message = normalizeError(error, "Failed to update expense");
+      const message = normalizeError(error, "Failed to update expense status");
+      set({ error: message, isSubmitting: false });
+      throw error;
+    }
+  },
+
+  addExpensePayment: async (expenseId, payload) => {
+    set({ isSubmitting: true, error: "" });
+    try {
+      const res = await api.post(`/expenses/${expenseId}/payments`, payload);
+      const updatedExpense = res.data?.data;
+
+      set((state) => ({
+        expenses: state.expenses.map((item) =>
+          item.expense_id === expenseId ? updatedExpense : item,
+        ),
+        isSubmitting: false,
+      }));
+
+      return updatedExpense;
+    } catch (error) {
+      const message = normalizeError(error, "Failed to add expense payment");
       set({ error: message, isSubmitting: false });
       throw error;
     }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useDashboardStore } from "../store/dashboardStore";
+import { useLanguageStore } from "../store/languageStore";
 
 const Ico = ({ d, size = 20, stroke = true }) => (
   <svg
@@ -32,6 +33,16 @@ const HIcon = {
       ]}
     />
   ),
+  Globe: () => (
+    <Ico
+      d={[
+        "M12 2a10 10 0 100 20 10 10 0 000-20z",
+        "M2 12h20",
+        "M12 2c2.5 2.7 4 6.1 4 10s-1.5 7.3-4 10",
+        "M12 2c-2.5 2.7-4 6.1-4 10s1.5 7.3 4 10",
+      ]}
+    />
+  ),
   User: () => (
     <Ico
       d={[
@@ -44,7 +55,8 @@ const HIcon = {
     <Ico
       d={[
         "M12 15a3 3 0 100-6 3 3 0 000 6z",
-        "M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z",
+        "M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33",
+        "M14 3.17V3a2 2 0 00-4 0v.17",
       ]}
     />
   ),
@@ -56,7 +68,7 @@ const HIcon = {
   Sun: () => (
     <Ico
       d={[
-        "M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42",
+        "M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2",
         "M12 17a5 5 0 100-10 5 5 0 000 10z",
       ]}
     />
@@ -87,6 +99,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { summary, fetchDashboardSummary } = useDashboardStore();
+  const { lang, setLang, t } = useLanguageStore();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -103,7 +116,6 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setProfileOpen(false);
       }
-
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
       }
@@ -115,8 +127,8 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
 
   const displayName = user?.full_name || user?.username || "User";
   const displayEmail = user?.email || "no-email@example.com";
-  const displayRole = user?.role?.role_name || "No Role";
-  const displayStore = user?.store?.store_name || "No Store";
+  const displayRole = user?.role?.role_name || t("noRole");
+  const displayStore = user?.store?.store_name || t("noStore");
   const avatarLetter = displayName?.charAt(0)?.toUpperCase() || "U";
 
   const formattedRole =
@@ -138,59 +150,66 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
   const textSec = darkMode ? "#a8d4c2" : "#3d7a5a";
   const textMuted = darkMode ? "#5a8a72" : "#6aaa88";
   const accent = "#ac5208";
-  const accentHover = darkMode ? "#c96010" : "#8f4406";
   const green = darkMode ? "#22c55e" : "#16a34a";
   const cardBg = darkMode ? "#0a1628" : "#ffffff";
   const cardBorder = darkMode
     ? "rgba(255,255,255,0.08)"
     : "rgba(22,120,80,0.12)";
-
   const font = "'Open Sans', sans-serif";
 
   const STATS = [
     {
-      label: "Total Sales",
+      label: t("totalSales"),
       value: money(summary?.revenue),
       up: true,
-      delta: `${summary?.sales_count || 0} sales`,
+      delta: `${summary?.sales_count || 0} ${t("sales")}`,
     },
     {
-      label: "Purchases",
+      label: t("purchases"),
       value: money(summary?.purchases_total),
       up: false,
-      delta: "Cost",
+      delta: t("cost"),
     },
     {
-      label: "Due Amount",
+      label: t("dueAmount"),
       value: money(summary?.due_revenue),
       up: false,
-      delta: "Pending",
+      delta: t("pending"),
     },
     {
-      label: "Low Stock Items",
-      value: `${summary?.low_stock_alerts || 0} Items`,
+      label: t("lowStockItems"),
+      value: `${summary?.low_stock_alerts || 0} ${lang === "bn" ? "আইটেম" : "Items"}`,
       up: false,
-      delta: "Alert",
+      delta: t("alert"),
     },
   ];
 
   const notifications = [
     {
       id: 1,
-      text: `Low stock items: ${summary?.low_stock_alerts || 0}`,
-      time: "Live",
+      text:
+        lang === "bn"
+          ? `লো স্টক আইটেম: ${summary?.low_stock_alerts || 0}`
+          : `Low stock items: ${summary?.low_stock_alerts || 0}`,
+      time: t("live"),
       color: "#f59e0b",
     },
     {
       id: 2,
-      text: `Sales count: ${summary?.sales_count || 0}`,
-      time: "Live",
+      text:
+        lang === "bn"
+          ? `মোট বিক্রি সংখ্যা: ${summary?.sales_count || 0}`
+          : `Sales count: ${summary?.sales_count || 0}`,
+      time: t("live"),
       color: "#22c55e",
     },
     {
       id: 3,
-      text: `Due revenue: ${money(summary?.due_revenue)}`,
-      time: "Live",
+      text:
+        lang === "bn"
+          ? `বাকি টাকা: ${money(summary?.due_revenue)}`
+          : `Due revenue: ${money(summary?.due_revenue)}`,
+      time: t("live"),
       color: "#ef4444",
     },
   ];
@@ -212,10 +231,10 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
   };
 
   const menuItems = [
-    { icon: <HIcon.User />, label: "My Profile" },
+    { icon: <HIcon.User />, label: t("myProfile") },
     { icon: <HIcon.Store />, label: displayStore },
-    { icon: <HIcon.Report />, label: "Reports" },
-    { icon: <HIcon.Settings />, label: "Settings" },
+    { icon: <HIcon.Report />, label: t("reports") },
+    { icon: <HIcon.Settings />, label: t("settings") },
   ];
 
   const handleLogout = () => {
@@ -288,7 +307,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
             boxShadow: "0 3px 12px rgba(172,82,8,0.28)",
           }}
         >
-          <HIcon.Sale /> New Sale
+          <HIcon.Sale /> {t("newSale")}
         </button>
 
         <button
@@ -313,7 +332,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
             cursor: "pointer",
           }}
         >
-          <HIcon.Purchase /> Purchase
+          <HIcon.Purchase /> {t("purchase")}
         </button>
 
         <div ref={notifRef} style={{ position: "relative" }}>
@@ -365,11 +384,11 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                 <span
                   style={{ color: textPrimary, fontWeight: 700, fontSize: 14 }}
                 >
-                  Notifications
+                  {t("notifications")}
                 </span>
 
                 <span style={{ color: green, fontSize: 11, fontWeight: 700 }}>
-                  Live
+                  {t("live")}
                 </span>
               </div>
 
@@ -425,11 +444,46 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                     cursor: "pointer",
                   }}
                 >
-                  View stock alerts
+                  {t("viewStockAlerts")}
                 </span>
               </div>
             </div>
           )}
+        </div>
+
+        <div
+          style={{
+            height: 38,
+            borderRadius: 10,
+            border: `1px solid ${borderClr}`,
+            background: darkMode
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(22,120,80,0.06)",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "0 8px",
+            color: textSec,
+          }}
+        >
+          <HIcon.Globe />
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+            style={{
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              color: textSec,
+              fontFamily: font,
+              fontWeight: 800,
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            <option value="en">EN</option>
+            <option value="bn">BN</option>
+          </select>
         </div>
 
         <button
@@ -624,7 +678,7 @@ const Header = ({ onToggleSidebar, currentPage, darkMode, setDarkMode }) => {
                 }}
               >
                 <HIcon.Logout />
-                <span>Sign Out</span>
+                <span>{t("signOut")}</span>
               </button>
             </div>
           )}

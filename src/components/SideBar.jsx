@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { useLanguageStore } from "../store/languageStore";
 
-// ── SVG Icon helper ─────────────────────────────────────────────────
 const Icon = ({ d, size = 20, stroke = false, className = "" }) => (
   <svg
     width={size}
@@ -146,159 +146,169 @@ const Icons = {
   Close: () => <Icon stroke size={22} d="M6 18L18 6M6 6l12 12" />,
 };
 
-// ── Nav Data ────────────────────────────────────────────────────────
 const NAV = [
-  { id: 1, label: "Dashboard", icon: <Icons.Dashboard />, path: "/dashboard" },
+  {
+    id: 1,
+    labelKey: "dashboard",
+    icon: <Icons.Dashboard />,
+    path: "/dashboard",
+  },
   {
     id: 2,
-    label: "Sales",
+    labelKey: "sales",
     icon: <Icons.Sale />,
     subBar: [
-      { id: 21, label: "New Sale", path: "/sales/new", dot: "green" },
-      { id: 22, label: "Sale History", path: "/sales/history" },
-      { id: 23, label: "Sale Returns", path: "/sales/returns" },
-      { id: 24, label: "Installments", path: "/sales/installments" },
+      { id: 21, labelKey: "newSale", path: "/sales/new", dot: "green" },
+      { id: 22, labelKey: "saleHistory", path: "/sales/history" },
+      { id: 23, labelKey: "saleReturns", path: "/sales/returns" },
+      { id: 24, labelKey: "installments", path: "/sales/installments" },
     ],
   },
   {
     id: 3,
-    label: "Purchases",
+    labelKey: "purchases",
     icon: <Icons.Purchase />,
     subBar: [
-      { id: 31, label: "New Purchase", path: "/purchases/new", dot: "green" },
-      { id: 32, label: "Purchase History", path: "/purchases/history" },
-      { id: 33, label: "Purchase Returns", path: "/purchases/returns" },
+      { id: 31, labelKey: "newPurchase", path: "/purchases/new", dot: "green" },
+      { id: 32, labelKey: "purchaseHistory", path: "/purchases/history" },
+      { id: 33, labelKey: "purchaseReturns", path: "/purchases/returns" },
     ],
   },
   {
     id: 4,
-    label: "Inventory",
+    labelKey: "inventory",
     icon: <Icons.Inventory />,
     subBar: [
-      { id: 41, label: "Stock Overview", path: "/inventory/overview" },
+      { id: 41, labelKey: "stockOverview", path: "/inventory/overview" },
       {
         id: 42,
-        label: "Low Stock Alert",
+        labelKey: "lowStockAlert",
         path: "/inventory/low-stock",
         badge: "!",
       },
-      { id: 43, label: "Stock Transfer", path: "/inventory/transfer" },
-      { id: 44, label: "Damage Stock", path: "/inventory/damage" },
+      { id: 43, labelKey: "stockTransfer", path: "/inventory/transfer" },
+      { id: 44, labelKey: "damageStock", path: "/inventory/damage" },
     ],
   },
   {
     id: 5,
-    label: "Products",
+    labelKey: "products",
     icon: <Icons.Product />,
     subBar: [
-      { id: 51, label: "All Products", path: "/products" },
-      { id: 52, label: "Add Product", path: "/products/add" },
-      { id: 53, label: "Categories", path: "/products/categories" },
+      { id: 51, labelKey: "allProducts", path: "/products" },
+      { id: 52, labelKey: "addProduct", path: "/products/add" },
+      { id: 53, labelKey: "categories", path: "/products/categories" },
     ],
   },
   {
     id: 6,
-    label: "Customers",
+    labelKey: "customers",
     icon: <Icons.Customer />,
     subBar: [
-      { id: 61, label: "All Customers", path: "/customers" },
-      { id: 62, label: "Add Customer", path: "/customers/add" },
+      { id: 61, labelKey: "allCustomers", path: "/customers" },
+      { id: 62, labelKey: "addCustomer", path: "/customers/add" },
     ],
   },
   {
     id: 7,
-    label: "Suppliers",
+    labelKey: "suppliers",
     icon: <Icons.Supplier />,
     subBar: [
-      { id: 71, label: "All Suppliers", path: "/suppliers" },
-      { id: 72, label: "Add Supplier", path: "/suppliers/add" },
+      { id: 71, labelKey: "allSuppliers", path: "/suppliers" },
+      { id: 72, labelKey: "addSupplier", path: "/suppliers/add" },
     ],
   },
   {
     id: 8,
-    label: "Expenses",
+    labelKey: "expenses",
     icon: <Icons.Expense />,
     subBar: [
-      { id: 81, label: "All Expenses", path: "/expenses" },
-      { id: 82, label: "Add Expense", path: "/expenses/add" },
-      { id: 83, label: "Yearly Tracking", path: "/expenses/yearly" },
+      { id: 81, labelKey: "allExpenses", path: "/expenses" },
+      { id: 82, labelKey: "addExpense", path: "/expenses/add" },
+      { id: 83, labelKey: "yearlyTracking", path: "/expenses/yearly" },
     ],
   },
   {
     id: 9,
-    label: "Reports",
+    labelKey: "reports",
     icon: <Icons.Report />,
     subBar: [
-      { id: 91, label: "Sales Report", path: "/reports/sales" },
-      { id: 92, label: "Purchase Report", path: "/reports/purchase" },
-      { id: 93, label: "Inventory Report", path: "/reports/inventory" },
-      { id: 94, label: "Expense Report", path: "/reports/expenses" },
-      { id: 95, label: "Profit & Loss", path: "/reports/profit-loss" },
+      { id: 91, labelKey: "salesReport", path: "/reports/sales" },
+      { id: 92, labelKey: "purchaseReport", path: "/reports/purchase" },
+      { id: 93, labelKey: "inventoryReport", path: "/reports/inventory" },
+      { id: 94, labelKey: "expenseReport", path: "/reports/expenses" },
+      { id: 95, labelKey: "profitLoss", path: "/reports/profit-loss" },
     ],
   },
   {
     id: 10,
-    label: "Users",
+    labelKey: "users",
     icon: <Icons.Users />,
     subBar: [
-      { id: 101, label: "All Users", path: "/users" },
-      { id: 102, label: "Add User", path: "/users/add" },
-      { id: 103, label: "Roles", path: "/users/roles" },
+      { id: 101, labelKey: "allUsers", path: "/users" },
+      { id: 102, labelKey: "addUser", path: "/users/add" },
+      { id: 103, labelKey: "roles", path: "/users/roles" },
     ],
   },
   {
     id: 11,
-    label: "Stores",
+    labelKey: "stores",
     icon: <Icons.Store />,
     subBar: [
-      { id: 111, label: "All Stores", path: "/stores" },
-      { id: 112, label: "Add Store", path: "/stores/add" },
+      { id: 111, labelKey: "allStores", path: "/stores" },
+      { id: 112, labelKey: "addStore", path: "/stores/add" },
     ],
   },
 ];
 
-// ── Sidebar ─────────────────────────────────────────────────────────
 const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
   const [openSubmenus, setOpenSubmenus] = useState({ 2: true });
   const [hoveredItem, setHoveredItem] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const { hasRole } = useAuthStore();
+
+  const { t } = useLanguageStore();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const filteredNav = NAV.filter(item => {
+  const filteredNav = NAV.filter((item) => {
     const role = useAuthStore.getState().user?.role?.role_name?.toLowerCase();
-    
-    // Admin sees everything
-    if (role === 'admin') return true;
-    
-    // Manager sees everything except User/Store management
-    if (role === 'manager') {
-      return !['Users', 'Stores'].includes(item.label);
+
+    if (role === "admin") return true;
+
+    if (role === "manager") {
+      return !["users", "stores"].includes(item.labelKey);
     }
-    
-    // Seller sees restricted set
-    if (role === 'seller') {
-      return ['Dashboard', 'Sales', 'Purchases', 'Inventory', 'Products', 'Customers', 'Suppliers'].includes(item.label);
+
+    if (role === "seller") {
+      return [
+        "dashboard",
+        "sales",
+        "purchases",
+        "inventory",
+        "products",
+        "customers",
+        "suppliers",
+      ].includes(item.labelKey);
     }
-    
+
     return false;
   });
 
   const toggle = (id) => setOpenSubmenus((p) => ({ ...p, [id]: !p[id] }));
+
   const handleNav = (path) => {
     navigate(path);
     if (isMobile) onToggle();
   };
+
   const isActive = (item) =>
     item.path
       ? location.pathname === item.path
       : item.subBar?.some((s) => location.pathname === s.path);
+
   const isSubActive = (sub) => location.pathname === sub.path;
 
-  // ── Color tokens (light / dark) ──────────────────────────────────
   const bg = darkMode ? "#040d1c" : "#f0f7f4";
-  const bgSecondary = darkMode ? "#060f22" : "#e4f0eb";
   const borderClr = darkMode
     ? "rgba(255,255,255,0.06)"
     : "rgba(22,120,80,0.12)";
@@ -336,7 +346,6 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
             borderRadius: 8,
             boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
             border: `1px solid ${borderClr}`,
-            letterSpacing: "0.04em",
             whiteSpace: "nowrap",
             fontFamily: "'Open Sans', sans-serif",
           }}
@@ -356,7 +365,6 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
         fontFamily: "'Open Sans', sans-serif",
       }}
     >
-      {/* ── Logo / Toggle ── */}
       <div
         style={{
           padding: isOpen ? "20px 18px 16px" : "20px 0 16px",
@@ -368,7 +376,6 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
       >
         {isOpen && (
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Logo icon — green accent */}
             <div
               style={{
                 width: 38,
@@ -396,6 +403,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                 <path d="M3 8l2-4h14l2 4" />
               </svg>
             </div>
+
             <div>
               <div
                 style={{
@@ -416,11 +424,12 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                   letterSpacing: "0.1em",
                 }}
               >
-                POS SYSTEM
+                {t("posSystem")}
               </div>
             </div>
           </div>
         )}
+
         <button
           onClick={onToggle}
           style={{
@@ -452,10 +461,8 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
         </button>
       </div>
 
-      {/* ── Quick Action Buttons ── */}
       {isOpen && (
         <div style={{ padding: "14px 14px 8px", display: "flex", gap: 8 }}>
-          {/* Primary: accent #ac5208 */}
           <button
             onClick={() => handleNav("/sales/new")}
             style={{
@@ -465,7 +472,6 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
               background: accent,
               border: "none",
               color: "#ffffff",
-              fontFamily: "'Open Sans', sans-serif",
               fontWeight: 700,
               fontSize: 12,
               cursor: "pointer",
@@ -474,21 +480,11 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
               justifyContent: "center",
               gap: 5,
               boxShadow: "0 3px 12px rgba(172,82,8,0.45)",
-              letterSpacing: "0.03em",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = accentHover;
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = accent;
-              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <Icons.Sale /> New Sale
+            <Icons.Sale /> {t("newSale")}
           </button>
-          {/* Secondary: ghost green */}
+
           <button
             onClick={() => handleNav("/purchases/new")}
             style={{
@@ -500,7 +496,6 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                 : "rgba(22,163,74,0.1)",
               border: `1px solid ${darkMode ? "rgba(34,197,94,0.25)" : "rgba(22,163,74,0.3)"}`,
               color: green,
-              fontFamily: "'Open Sans', sans-serif",
               fontWeight: 700,
               fontSize: 12,
               cursor: "pointer",
@@ -508,26 +503,13 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
               alignItems: "center",
               justifyContent: "center",
               gap: 5,
-              letterSpacing: "0.03em",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = darkMode
-                ? "rgba(34,197,94,0.16)"
-                : "rgba(22,163,74,0.18)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = darkMode
-                ? "rgba(34,197,94,0.08)"
-                : "rgba(22,163,74,0.1)";
             }}
           >
-            <Icons.Purchase /> Purchase
+            <Icons.Purchase /> {t("purchase")}
           </button>
         </div>
       )}
 
-      {/* ── Nav ── */}
       <nav
         style={{
           flex: 1,
@@ -549,6 +531,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
         >
           {filteredNav.map((item) => {
             const active = isActive(item);
+
             return (
               <li key={item.id}>
                 <div
@@ -564,6 +547,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                         y: r.top + r.height / 2,
                       });
                     }
+
                     if (!active) e.currentTarget.style.background = hoverRowBg;
                   }}
                   onMouseLeave={(e) => {
@@ -593,11 +577,11 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                         display: "flex",
                         alignItems: "center",
                         flexShrink: 0,
-                        transition: "color 0.18s",
                       }}
                     >
                       {item.icon}
                     </span>
+
                     {isOpen && (
                       <span
                         style={{
@@ -607,19 +591,22 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                           letterSpacing: "0.02em",
                         }}
                       >
-                        {item.label}
+                        {t(item.labelKey)}
                       </span>
                     )}
                   </div>
+
                   {item.subBar && isOpen && (
                     <span style={{ color: textMuted, flexShrink: 0 }}>
                       <Icons.Chevron open={openSubmenus[item.id]} />
                     </span>
                   )}
                 </div>
-                {!isOpen && hoveredItem === item.id && tooltip(item.label)}
 
-                {/* Submenu */}
+                {!isOpen &&
+                  hoveredItem === item.id &&
+                  tooltip(t(item.labelKey))}
+
                 {item.subBar && openSubmenus[item.id] && isOpen && (
                   <ul
                     style={{
@@ -633,6 +620,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                   >
                     {item.subBar.map((sub) => {
                       const sa = isSubActive(sub);
+
                       return (
                         <li key={sub.id}>
                           <div
@@ -675,6 +663,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                                     : "rgba(22,120,80,0.2)",
                               }}
                             />
+
                             <span
                               style={{
                                 color: sa ? textPrimary : textSec,
@@ -683,8 +672,9 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                                 letterSpacing: "0.02em",
                               }}
                             >
-                              {sub.label}
+                              {t(sub.labelKey)}
                             </span>
+
                             {sub.badge && (
                               <span
                                 style={{
@@ -701,6 +691,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
                                 {sub.badge}
                               </span>
                             )}
+
                             {sub.dot === "green" && (
                               <span
                                 style={{
@@ -725,7 +716,6 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
         </ul>
       </nav>
 
-      {/* ── Footer ── */}
       {isOpen && (
         <div
           style={{
@@ -746,6 +736,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
           >
             v2.1.0 • CraftPOS
           </span>
+
           <span
             className="live-badge"
             style={{
@@ -759,7 +750,7 @@ const SideBar = ({ isOpen, isMobile, onToggle, darkMode }) => {
               letterSpacing: "0.06em",
             }}
           >
-            LIVE
+            {t("live")}
           </span>
         </div>
       )}

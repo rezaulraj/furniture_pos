@@ -39,6 +39,18 @@ import SalesReport from "./pages/report/SalesReport";
 import PurchaseReport from "./pages/report/PurchaseReport";
 import InventoryReport from "./pages/report/InventoryReport";
 import ExpenseReport from "./pages/report/ExpenseReport";
+import DailySalesReport from "./pages/report/DailySalesReport";
+import ProductSalesReport from "./pages/report/ProductSalesReport";
+import CustomerSalesReport from "./pages/report/CustomerSalesReport";
+import ProfitLossReport from "./pages/report/ProfitLossReport";
+import CashFlowReport from "./pages/report/CashFlowReport";
+import SupplierReport from "./pages/report/SupplierReport";
+import RefundReport from "./pages/report/RefundReport";
+import ItemPurchaseReport from "./pages/report/ItemPurchaseReport";
+import BankPaymentReport from "./pages/report/BankPaymentReport";
+import SupplierItemReport from "./pages/report/SupplierItemReport";
+import SupplierProfitLossReport from "./pages/report/SupplierProfitLossReport";
+
 function App() {
   return (
     <>
@@ -75,11 +87,26 @@ function App() {
             <Route path="/suppliers/add" element={<AddSupplier />} />
             <Route path="/expenses" element={<AllExpenses />} />
             <Route path="/expenses/add" element={<AddExpense />} />
+            
             <Route path="/reports" element={<ReportsOverview />} />
             <Route path="/reports/sales" element={<SalesReport />} />
+            <Route path="/reports/sales/daily" element={<DailySalesReport />} />
+            <Route path="/reports/sales/product" element={<ProductSalesReport />} />
+            <Route path="/reports/sales/customer" element={<CustomerSalesReport />} />
+            <Route path="/reports/sales/profit" element={<ProfitLossReport />} />
+            <Route path="/reports/refunds" element={<RefundReport />} />
+            
             <Route path="/reports/purchase" element={<PurchaseReport />} />
+            <Route path="/reports/purchases/items" element={<ItemPurchaseReport />} />
+            <Route path="/reports/suppliers" element={<SupplierReport />} />
+            <Route path="/reports/suppliers/items" element={<SupplierItemReport />} />
+            <Route path="/reports/suppliers/profit-loss" element={<SupplierProfitLossReport />} />
+            
             <Route path="/reports/inventory" element={<InventoryReport />} />
             <Route path="/reports/expenses" element={<ExpenseReport />} />
+            <Route path="/reports/cash-flow" element={<CashFlowReport />} />
+            <Route path="/reports/payments/bank" element={<BankPaymentReport />} />
+
             <Route path="/stores" element={<AllBranches />} />
             <Route path="/stores/add" element={<AddStore />} />
             <Route path="/users" element={<AllUser />} />

@@ -7,6 +7,24 @@ const normalizeError = (error, fallback) =>
   error?.message ||
   fallback;
 
+/**
+ * Available Report Types:
+ * - sales
+ * - sales/product
+ * - sales/customer
+ * - sales/profit
+ * - cash-flow
+ * - sales/daily
+ * - payments/bank
+ * - purchases/items
+ * - suppliers
+ * - suppliers/:supplierId/statement
+ * - suppliers/items
+ * - suppliers/profit-loss
+ * - expenses
+ * - refunds
+ */
+
 export const useReportStore = create((set) => ({
   reports: {},
   isLoading: false,
@@ -18,7 +36,8 @@ export const useReportStore = create((set) => ({
   fetchReport: async (reportType, params = {}) => {
     set({ isLoading: true, error: "" });
     try {
-      const res = await api.get(`/reports/${reportType}`, { params });
+      const path = reportType.startsWith('/') ? reportType : `/${reportType}`;
+      const res = await api.get(`/reports${path}`, { params });
       const data = res.data?.data;
       
       set((state) => ({
@@ -39,7 +58,8 @@ export const useReportStore = create((set) => ({
 
   downloadReport: async (reportType, params = {}) => {
     try {
-      const res = await api.get(`/reports/${reportType}/export`, {
+      const path = reportType.startsWith('/') ? reportType : `/${reportType}`;
+      const res = await api.get(`/reports${path}/export`, {
         params,
         responseType: "blob",
       });
@@ -47,7 +67,7 @@ export const useReportStore = create((set) => ({
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `${reportType}-report.xlsx`);
+      link.setAttribute("download", `${reportType.replace(/\//g, '-')}-report.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();

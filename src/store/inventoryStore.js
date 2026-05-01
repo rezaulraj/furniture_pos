@@ -54,7 +54,31 @@ export const useInventoryStore = create((set) => ({
     }
   },
 
+  addStock: async (payload) => {
+    set({ isSubmitting: true, error: "" });
+    try {
+      const res = await api.post("/inventory/add-stock", payload);
+      const updated = res.data?.data;
+
+      set((state) => ({
+        inventory: state.inventory.map((item) =>
+          item.inventory_id === updated.inventory_id ? updated : item,
+        ),
+        isSubmitting: false,
+      }));
+
+      return updated;
+    } catch (error) {
+      set({
+        error: normalizeError(error, "Failed to add stock"),
+        isSubmitting: false,
+      });
+      throw error;
+    }
+  },
+
   updateInventory: async (inventoryId, payload) => {
+
     set({ isSubmitting: true, error: "" });
     try {
       const res = await api.patch(`/inventory/${inventoryId}`, payload);

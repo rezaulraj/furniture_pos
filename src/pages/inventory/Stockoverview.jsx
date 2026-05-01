@@ -46,9 +46,11 @@ export default function StockOverview() {
     clearError,
     fetchInventory,
     createInventory,
+    addStock,
     updateInventory,
     deleteInventory,
   } = useInventoryStore();
+
 
   const { products, fetchProducts } = useProductStore();
   const { branches, fetchBranches } = useBranchStore();
@@ -138,6 +140,15 @@ export default function StockOverview() {
     clearError();
   };
 
+  const openAddStock = (item) => {
+    setModal("add-stock");
+    setActiveInventory(item);
+    setForm({ ...EMPTY_FORM, quantity: 1 });
+    setFormError("");
+    clearError();
+  };
+
+
   const closeModal = () => {
     setModal(null);
     setActiveInventory(null);
@@ -206,6 +217,24 @@ export default function StockOverview() {
       closeModal();
     } catch {}
   };
+
+  const handleAddStock = async () => {
+    if (!form.quantity || Number(form.quantity) < 1) {
+      return setFormError("Quantity must be at least 1");
+    }
+
+    try {
+      await addStock({
+        store_id: activeInventory.store_id,
+        product_id: activeInventory.product_id,
+        quantity: Number(form.quantity),
+      });
+      closeModal();
+    } catch {
+      setFormError(useInventoryStore.getState().error || "Failed to add stock");
+    }
+  };
+
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -420,18 +449,28 @@ export default function StockOverview() {
 
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
+                    onClick={() => openAddStock(item)}
+                    style={iconButton(T.green, "rgba(34,197,94,.12)")}
+                    title="Add Stock"
+                  >
+                    <Ic.Plus />
+                  </button>
+                  <button
                     onClick={() => openEdit(item)}
                     style={iconButton(T.accent)}
+                    title="Edit"
                   >
                     <Ic.Edit />
                   </button>
                   <button
                     onClick={() => openDelete(item)}
                     style={iconButton(T.red, "rgba(248,113,113,.1)")}
+                    title="Delete"
                   >
                     <Ic.Trash />
                   </button>
                 </div>
+
               </div>
             );
           })
@@ -460,7 +499,20 @@ export default function StockOverview() {
           onConfirm={handleDelete}
         />
       )}
+
+      {modal === "add-stock" && activeInventory && (
+        <AddStockModal
+          item={activeInventory}
+          form={form}
+          setForm={setForm}
+          loading={isSubmitting}
+          error={formError}
+          onClose={closeModal}
+          onSubmit={handleAddStock}
+        />
+      )}
     </div>
+
   );
 }
 
@@ -698,6 +750,91 @@ function DeleteModal({ item, loading, onClose, onConfirm }) {
     </div>
   );
 }
+
+function AddStockModal({
+  item,
+  form,
+  setForm,
+  loading,
+  error,
+  onClose,
+  onSubmit,
+}) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.82)",
+        display: "grid",
+        placeItems: "center",
+        zIndex: 1000,
+        padding: 16,
+      }}
+    >
+      <div style={{ ...card(), width: "100%", maxWidth: 420, padding: 24 }}>
+        <h2 style={{ color: T.text, margin: 0, fontWeight: 900 }}>Add Stock</h2>
+        <p style={{ color: T.textSub, margin: "6px 0 16px", fontSize: 13 }}>
+          Adding stock for <b>{item.product?.product_name}</b> at{" "}
+          <b>{item.store?.store_name}</b>
+        </p>
+
+        {error && (
+          <p style={{ color: T.red, fontWeight: 700, fontSize: 12 }}>{error}</p>
+        )}
+
+        <div style={{ marginTop: 12 }}>
+          <Field label="Quantity to Add">
+            <input
+              type="number"
+              autoFocus
+              value={form.quantity}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, quantity: e.target.value }))
+              }
+              style={inputStyle()}
+              placeholder="Enter quantity"
+            />
+          </Field>
+        </div>
+
+        <div
+          style={{
+            marginTop: 16,
+            padding: 12,
+            background: T.bg2,
+            borderRadius: 10,
+          }}
+        >
+          <p style={{ color: T.textSub, margin: 0, fontSize: 11 }}>
+            Current Quantity: <b>{item.quantity}</b>
+          </p>
+          <p style={{ color: T.accent, margin: "4px 0 0", fontSize: 12 }}>
+            New Quantity: <b>{Number(item.quantity) + Number(form.quantity || 0)}</b>
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
+          <Btn
+            variant="ghost"
+            onClick={onClose}
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            Cancel
+          </Btn>
+          <Btn
+            onClick={onSubmit}
+            disabled={loading}
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            {loading ? "Adding..." : "Add Stock"}
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function Field({ label, children }) {
   return (

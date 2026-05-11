@@ -4,6 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useSupplierStore } from "../../store/supplierStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const EMPTY_FORM = {
   supplier_name: "",
@@ -26,13 +27,14 @@ function SupplierModal({
   loading,
   error,
 }) {
+  const { t } = useLanguageStore();
   const isView = mode === "view";
   const title =
     mode === "create"
-      ? "Add Supplier"
+      ? t("addSupplier")
       : mode === "edit"
-        ? "Edit Supplier"
-        : "Supplier Details";
+        ? t("edit") + " " + t("supplier")
+        : t("supplierDetails");
 
   const setField = (key) => (e) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -105,7 +107,7 @@ function SupplierModal({
                 <p
                   style={{ color: T.textSub, fontSize: 11, margin: "3px 0 0" }}
                 >
-                  Supplier ID: {supplier.supplier_id}
+                  {t("supplier")} ID: {supplier.supplier_id}
                 </p>
               )}
             </div>
@@ -163,74 +165,74 @@ function SupplierModal({
               gap: 12,
             }}
           >
-            <Field label="Supplier Name *">
+            <Field label={`${t("supplierName")} *`}>
               <input
                 value={form.supplier_name}
                 onChange={setField("supplier_name")}
                 readOnly={isView}
-                placeholder="Supplier name"
+                placeholder={t("supplierName")}
                 style={inputStyle(isView)}
               />
             </Field>
 
-            <Field label="Contact Person">
+            <Field label={t("contactPerson")}>
               <input
                 value={form.contact_person}
                 onChange={setField("contact_person")}
                 readOnly={isView}
-                placeholder="Contact person"
+                placeholder={t("contactPerson")}
                 style={inputStyle(isView)}
               />
             </Field>
 
-            <Field label="Phone">
+            <Field label={t("phone")}>
               <input
                 value={form.phone}
                 onChange={setField("phone")}
                 readOnly={isView}
-                placeholder="Phone"
+                placeholder={t("phone")}
                 style={inputStyle(isView)}
               />
             </Field>
 
-            <Field label="Email">
+            <Field label={t("email")}>
               <input
                 value={form.email}
                 onChange={setField("email")}
                 readOnly={isView}
-                placeholder="Email"
+                placeholder={t("email")}
                 style={inputStyle(isView)}
               />
             </Field>
 
-            <Field label="GST Number">
+            <Field label={t("gstNumber")}>
               <input
                 value={form.gst_number}
                 onChange={setField("gst_number")}
                 readOnly={isView}
-                placeholder="GST number"
+                placeholder={t("gstNumber")}
                 style={inputStyle(isView)}
               />
             </Field>
 
-            <Field label="Payment Terms">
+            <Field label={t("paymentTerms")}>
               <input
                 value={form.payment_terms}
                 onChange={setField("payment_terms")}
                 readOnly={isView}
-                placeholder="Payment terms"
+                placeholder={t("paymentTerms")}
                 style={inputStyle(isView)}
               />
             </Field>
           </div>
 
-          <Field label="Address">
+          <Field label={t("address")}>
             <textarea
               rows={4}
               value={form.address}
               onChange={setField("address")}
               readOnly={isView}
-              placeholder="Address"
+              placeholder={t("address")}
               style={textareaStyle(isView)}
             />
           </Field>
@@ -261,7 +263,7 @@ function SupplierModal({
                   fontSize: 13,
                 }}
               >
-                Supplier Status
+                {t("supplierStatus")}
               </p>
               <p
                 style={{
@@ -270,13 +272,13 @@ function SupplierModal({
                   fontSize: 11,
                 }}
               >
-                {form.is_active ? "Active supplier" : "Inactive supplier"}
+                {form.is_active ? t("active") + " " + t("supplier").toLowerCase() : t("inactive") + " " + t("supplier").toLowerCase()}
               </p>
             </div>
 
             {isView ? (
               <Badge color={form.is_active ? "green" : "red"} small>
-                {form.is_active ? "ACTIVE" : "INACTIVE"}
+                {form.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
               </Badge>
             ) : (
               <button
@@ -323,10 +325,10 @@ function SupplierModal({
                   margin: "0 0 8px",
                 }}
               >
-                PURCHASE HISTORY
+                {t("purchaseHistory").toUpperCase()}
               </p>
               <p style={{ color: T.text, fontSize: 13, margin: 0 }}>
-                Total purchases: <strong>{supplier.purchases.length}</strong>
+                {t("totalPurchases")}: <strong>{supplier.purchases.length}</strong>
               </p>
             </div>
           )}
@@ -345,7 +347,7 @@ function SupplierModal({
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            {isView ? "Close" : "Cancel"}
+            {isView ? t("cancel") : t("cancel")}
           </Btn>
 
           {!isView && (
@@ -355,11 +357,11 @@ function SupplierModal({
             >
               {loading
                 ? mode === "create"
-                  ? "Creating..."
-                  : "Saving..."
+                  ? t("creating")
+                  : t("saving")
                 : mode === "create"
-                  ? "Create Supplier"
-                  : "Save Changes"}
+                  ? t("addSupplier")
+                  : t("saveChanges")}
             </Btn>
           )}
         </div>
@@ -369,6 +371,7 @@ function SupplierModal({
 }
 
 function DeleteModal({ supplier, loading, onClose, onConfirm }) {
+  const { t } = useLanguageStore();
   return (
     <div
       style={{
@@ -416,7 +419,7 @@ function DeleteModal({ supplier, loading, onClose, onConfirm }) {
             margin: "0 0 8px",
           }}
         >
-          Remove Supplier?
+          {t("removeSupplierQuestion")}
         </h3>
 
         <p
@@ -428,7 +431,7 @@ function DeleteModal({ supplier, loading, onClose, onConfirm }) {
           }}
         >
           <strong style={{ color: T.text }}>{supplier?.supplier_name}</strong>{" "}
-          will be soft-deleted and marked inactive.
+          {t("removeSupplierWarning")}
         </p>
 
         <div
@@ -447,7 +450,7 @@ function DeleteModal({ supplier, loading, onClose, onConfirm }) {
             {supplier?.supplier_name}
           </p>
           <p style={{ color: T.textSub, fontSize: 10.5, margin: "2px 0 0" }}>
-            {supplier?.phone || "No phone"} • {supplier?.email || "No email"}
+            {supplier?.phone || t("noData")} • {supplier?.email || t("noData")}
           </p>
         </div>
 
@@ -457,7 +460,7 @@ function DeleteModal({ supplier, loading, onClose, onConfirm }) {
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            Cancel
+            {t("cancel")}
           </Btn>
 
           <button
@@ -476,7 +479,7 @@ function DeleteModal({ supplier, loading, onClose, onConfirm }) {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? "Removing..." : "Remove Supplier"}
+            {loading ? t("removing") : t("remove") + " " + t("supplier")}
           </button>
         </div>
       </div>
@@ -485,6 +488,7 @@ function DeleteModal({ supplier, loading, onClose, onConfirm }) {
 }
 
 export default function AllSuppliers() {
+  const { t, lang } = useLanguageStore();
   const {
     suppliers,
     isLoading,
@@ -586,7 +590,7 @@ export default function AllSuppliers() {
   };
 
   const validate = () => {
-    if (!form.supplier_name.trim()) return "Supplier name is required";
+    if (!form.supplier_name.trim()) return lang === "bn" ? "সাপ্লায়ার নাম প্রয়োজন" : "Supplier name is required";
     return "";
   };
 
@@ -611,7 +615,7 @@ export default function AllSuppliers() {
       closeModal();
     } catch {
       setFormError(
-        useSupplierStore.getState().error || "Failed to create supplier",
+        useSupplierStore.getState().error || (lang === "bn" ? "সাপ্লায়ার তৈরি করতে ব্যর্থ" : "Failed to create supplier"),
       );
     }
   };
@@ -637,7 +641,7 @@ export default function AllSuppliers() {
       closeModal();
     } catch {
       setFormError(
-        useSupplierStore.getState().error || "Failed to update supplier",
+        useSupplierStore.getState().error || (lang === "bn" ? "সাপ্লায়ার আপডেট করতে ব্যর্থ" : "Failed to update supplier"),
       );
     }
   };
@@ -652,8 +656,8 @@ export default function AllSuppliers() {
   };
 
   const total = suppliers.length;
-  const active = suppliers.filter((s) => s.is_active).length;
-  const inactive = suppliers.filter((s) => !s.is_active).length;
+  const activeCount = suppliers.filter((s) => s.is_active).length;
+  const inactiveCount = suppliers.filter((s) => !s.is_active).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -666,23 +670,23 @@ export default function AllSuppliers() {
       >
         {[
           {
-            label: "Total Suppliers",
+            label: t("totalSuppliers"),
             value: total,
-            sub: "All supplier records",
+            sub: t("allSupplierRecords"),
             color: T.accent,
             icon: "🏭",
           },
           {
-            label: "Active",
-            value: active,
-            sub: "Available suppliers",
+            label: t("active"),
+            value: activeCount,
+            sub: t("availableSuppliers"),
             color: T.green,
             icon: "✅",
           },
           {
-            label: "Inactive",
-            value: inactive,
-            sub: "Soft-deleted suppliers",
+            label: t("inactive"),
+            value: inactiveCount,
+            sub: t("softDeletedSuppliers"),
             color: T.red,
             icon: "🚫",
           },
@@ -772,7 +776,7 @@ export default function AllSuppliers() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, contact, phone, email..."
+            placeholder={t("searchSupplier")}
             style={{
               flex: 1,
               border: "none",
@@ -786,9 +790,9 @@ export default function AllSuppliers() {
 
         <div style={{ display: "flex", gap: 6 }}>
           {[
-            ["all", "All"],
-            ["active", "Active"],
-            ["inactive", "Inactive"],
+            ["all", t("all")],
+            ["active", t("active")],
+            ["inactive", t("inactive")],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -800,14 +804,12 @@ export default function AllSuppliers() {
                 border: `1px solid ${
                   statusF === value ? "transparent" : T.border
                 }`,
-                background:
-                  statusF === value
-                    ? `linear-gradient(135deg, ${T.accent}, ${T.accent})`
-                    : T.bg3,
+                background: statusF === value ? T.accent : T.bg3,
                 color: statusF === value ? "#fff" : T.textSub,
-                fontWeight: 800,
-                fontSize: 12,
+                fontWeight: 700,
+                fontSize: 11,
                 cursor: "pointer",
+                transition: "all .15s",
               }}
             >
               {label}
@@ -816,7 +818,7 @@ export default function AllSuppliers() {
         </div>
 
         <Btn onClick={openCreate}>
-          <Ic.Plus /> Add Supplier
+          <Ic.Plus /> {t("addSupplier")}
         </Btn>
       </div>
 
@@ -838,56 +840,43 @@ export default function AllSuppliers() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
           gap: 14,
         }}
       >
         {isLoading ? (
-          [1, 2, 3].map((i) => (
-            <div
-              key={i}
-              style={{
-                ...card(),
-                minHeight: 230,
-                opacity: 0.6,
-              }}
-            />
-          ))
+          <div style={{ gridColumn: "1/-1", padding: 60, textAlign: "center" }}>
+            <p style={{ color: T.textSub }}>{t("loading")}</p>
+          </div>
         ) : filtered.length === 0 ? (
           <div
             style={{
-              ...card(),
-              padding: 40,
-              gridColumn: "1 / -1",
+              gridColumn: "1/-1",
+              padding: 60,
               textAlign: "center",
+              ...card(),
             }}
           >
-            <div style={{ fontSize: 48, marginBottom: 10 }}>🏭</div>
-            <p
-              style={{
-                color: T.textSub,
-                fontSize: 14,
-                fontWeight: 700,
-                margin: 0,
-              }}
-            >
-              No suppliers found
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🏭</div>
+            <h3 style={{ color: T.text, margin: "0 0 6px" }}>
+              {t("noSuppliersFound")}
+            </h3>
+            <p style={{ color: T.textSub, fontSize: 13, marginBottom: 20 }}>
+              {t("noData")}
             </p>
-            <Btn onClick={openCreate} style={{ marginTop: 14 }}>
-              <Ic.Plus /> Add Supplier
+            <Btn onClick={openCreate} style={{ margin: "0 auto" }}>
+              <Ic.Plus /> {t("addSupplier")}
             </Btn>
           </div>
         ) : (
-          filtered.map((supplier) => (
+          filtered.map((s, idx) => (
             <div
-              key={supplier.supplier_id}
+              key={s.supplier_id}
               style={{
                 ...card(),
                 padding: 18,
-                borderTop: `3px solid ${
-                  supplier.is_active ? T.accent : T.textMut
-                }`,
-                opacity: supplier.is_active ? 1 : 0.7,
+                borderTop: `3px solid ${s.is_active ? T.accent : T.textMut}`,
+                animation: `cardIn .25s ease ${idx * 0.03}s both`,
               }}
             >
               <div
@@ -895,34 +884,46 @@ export default function AllSuppliers() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "flex-start",
-                  marginBottom: 12,
                   gap: 12,
+                  marginBottom: 14,
                 }}
               >
-                <div>
-                  <p
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
                     style={{
-                      color: T.text,
+                      width: 42,
+                      height: 42,
+                      borderRadius: 10,
+                      background: "rgba(172,82,8,0.08)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: T.accent,
                       fontWeight: 900,
-                      fontSize: 15,
-                      margin: "0 0 4px",
+                      fontSize: 18,
                     }}
                   >
-                    {supplier.supplier_name}
-                  </p>
-                  <p
-                    style={{
-                      color: T.textMut,
-                      fontSize: 10.5,
-                      margin: 0,
-                    }}
-                  >
-                    Supplier ID: {supplier.supplier_id}
-                  </p>
+                    {s.supplier_name[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h3
+                      style={{
+                        color: T.text,
+                        fontSize: 14.5,
+                        fontWeight: 900,
+                        margin: 0,
+                      }}
+                    >
+                      {s.supplier_name}
+                    </h3>
+                    <p style={{ color: T.textMut, fontSize: 10, margin: 0 }}>
+                      ID: {s.supplier_id}
+                    </p>
+                  </div>
                 </div>
 
-                <Badge color={supplier.is_active ? "green" : "red"} small>
-                  {supplier.is_active ? "ACTIVE" : "INACTIVE"}
+                <Badge color={s.is_active ? "green" : "red"} small>
+                  {s.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
                 </Badge>
               </div>
 
@@ -931,44 +932,42 @@ export default function AllSuppliers() {
                   display: "flex",
                   flexDirection: "column",
                   gap: 8,
-                  marginBottom: 14,
+                  marginBottom: 16,
                 }}
               >
-                <InfoLine
-                  label="Contact"
-                  value={supplier.contact_person || "—"}
-                />
-                <InfoLine label="Phone" value={supplier.phone || "—"} />
-                <InfoLine label="Email" value={supplier.email || "—"} />
-                <InfoLine
-                  label="Payment Terms"
-                  value={supplier.payment_terms || "—"}
-                />
+                <DetailItem label={t("contactPerson")} value={s.contact_person || "—"} />
+                <DetailItem label={t("phone")} value={s.phone || "—"} />
+                <DetailItem label={t("email")} value={s.email || "—"} />
               </div>
 
-              <div style={{ display: "flex", gap: 8 }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  paddingTop: 14,
+                  borderTop: `1px solid ${T.border}`,
+                }}
+              >
                 <button
-                  onClick={() => openView(supplier)}
-                  style={actionBtn("rgba(34,197,94,0.10)", T.green)}
+                  onClick={() => openView(s)}
+                  style={actionBtnStyle("rgba(34,197,94,0.1)", T.green)}
                 >
-                  <Ic.Eye /> View
+                  <Ic.Eye /> {t("view")}
                 </button>
-
                 <button
-                  onClick={() => openEdit(supplier)}
-                  style={actionBtn("rgba(172,82,8,0.12)", T.accent)}
+                  onClick={() => openEdit(s)}
+                  style={actionBtnStyle("rgba(172,82,8,0.12)", T.accent)}
                 >
-                  <Ic.Edit /> Edit
+                  <Ic.Edit /> {t("edit")}
                 </button>
-
                 <button
-                  onClick={() => openDelete(supplier)}
+                  onClick={() => openDelete(s)}
                   style={{
                     width: 36,
                     height: 36,
                     borderRadius: 10,
-                    border: "1px solid rgba(248,113,113,0.2)",
-                    background: "rgba(248,113,113,0.1)",
+                    background: "rgba(239,68,68,0.1)",
+                    border: "1px solid rgba(239,68,68,0.2)",
                     color: T.red,
                     cursor: "pointer",
                     display: "grid",
@@ -1004,21 +1003,26 @@ export default function AllSuppliers() {
           onConfirm={handleDelete}
         />
       )}
+
+      <style>{`
+        @keyframes cardIn {
+          from { opacity: 0; transform: translateY(12px) scale(0.98); }
+          to { opacity: 1; transform: none; }
+        }
+      `}</style>
     </div>
   );
 }
 
 function Field({ label, children }) {
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <label
         style={{
-          display: "block",
-          marginBottom: 6,
           color: T.textSub,
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: 800,
-          letterSpacing: "0.06em",
+          letterSpacing: "0.02em",
         }}
       >
         {label.toUpperCase()}
@@ -1028,25 +1032,16 @@ function Field({ label, children }) {
   );
 }
 
-function InfoLine({ label, value }) {
+function DetailItem({ label, value }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        gap: 12,
-        padding: "7px 0",
-        borderBottom: `1px solid ${T.border}`,
-      }}
-    >
-      <span style={{ color: T.textSub, fontSize: 11 }}>{label}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+      <span style={{ color: T.textMut, fontSize: 11.5 }}>{label}</span>
       <span
         style={{
-          color: T.text,
+          color: T.textSub,
           fontSize: 11.5,
-          fontWeight: 600,
+          fontWeight: 700,
           textAlign: "right",
-          wordBreak: "break-word",
         }}
       >
         {value}
@@ -1055,7 +1050,33 @@ function InfoLine({ label, value }) {
   );
 }
 
-function actionBtn(bg, color) {
+function inputStyle(readOnly = false) {
+  return {
+    width: "100%",
+    height: 42,
+    borderRadius: 10,
+    background: readOnly ? T.bg2 : T.bg3,
+    border: `1px solid ${T.border}`,
+    padding: "0 12px",
+    color: T.text,
+    fontSize: 13.5,
+    outline: "none",
+    boxSizing: "border-box",
+  };
+}
+
+function textareaStyle(readOnly = false) {
+  return {
+    ...inputStyle(readOnly),
+    height: "auto",
+    padding: "10px 12px",
+    resize: "vertical",
+    fontFamily: "inherit",
+    lineHeight: 1.5,
+  };
+}
+
+function actionBtnStyle(bg, color) {
   return {
     flex: 1,
     height: 36,
@@ -1070,38 +1091,5 @@ function actionBtn(bg, color) {
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-  };
-}
-
-function inputStyle(readOnly = false) {
-  return {
-    width: "100%",
-    boxSizing: "border-box",
-    background: readOnly ? T.bg2 : T.bg3,
-    border: `1px solid ${T.border}`,
-    borderRadius: 12,
-    padding: "12px 14px",
-    color: T.text,
-    fontSize: 14,
-    outline: "none",
-    cursor: readOnly ? "default" : "text",
-  };
-}
-
-function textareaStyle(readOnly = false) {
-  return {
-    width: "100%",
-    boxSizing: "border-box",
-    background: readOnly ? T.bg2 : T.bg3,
-    border: `1px solid ${T.border}`,
-    borderRadius: 12,
-    padding: "12px 14px",
-    color: T.text,
-    fontSize: 14,
-    outline: "none",
-    resize: "vertical",
-    fontFamily: "inherit",
-    lineHeight: 1.6,
-    cursor: readOnly ? "default" : "text",
   };
 }

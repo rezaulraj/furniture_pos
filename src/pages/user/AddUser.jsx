@@ -6,22 +6,7 @@ import { Ic } from "../../components/Icons";
 import { useUserStore } from "../../store/userStore";
 import { useBranchStore } from "../../store/branchStore";
 import { useZoneStore } from "../../store/zoneStore";
-
-const ROLES = [
-  { role_id: 1, role_name: "admin", icon: "🛡️", desc: "Full system access" },
-  {
-    role_id: 2,
-    role_name: "manager",
-    icon: "📊",
-    desc: "Manage stores in a zone",
-  },
-  {
-    role_id: 3,
-    role_name: "seller",
-    icon: "🛒",
-    desc: "Sales and customer handling",
-  },
-];
+import { useLanguageStore } from "../../store/languageStore";
 
 const EMPTY = {
   username: "",
@@ -36,9 +21,26 @@ const EMPTY = {
 };
 
 export default function AddUser() {
+  const { t } = useLanguageStore();
   const navigate = useNavigate();
   const { userId } = useParams();
   const isEdit = Boolean(userId);
+
+  const ROLES = [
+    { role_id: 1, role_name: t("admin"), icon: "🛡️", desc: t("fullSystemAccess") },
+    {
+      role_id: 2,
+      role_name: t("manager"),
+      icon: "📊",
+      desc: t("manageStoresInZone"),
+    },
+    {
+      role_id: 3,
+      role_name: t("seller"),
+      icon: "🛒",
+      desc: t("salesCustomerHandling"),
+    },
+  ];
 
   const {
     currentUser,
@@ -86,7 +88,7 @@ export default function AddUser() {
 
   const selectedRole = useMemo(
     () => ROLES.find((r) => Number(r.role_id) === Number(form.role_id)),
-    [form.role_id],
+    [form.role_id, t]
   );
 
   const selectedStore = useMemo(
@@ -101,18 +103,18 @@ export default function AddUser() {
   };
 
   const validate = () => {
-    if (!form.username.trim()) return "Username is required";
+    if (!form.username.trim()) return t("usernameRequired");
     if (form.username.trim().length < 3)
-      return "Username must be at least 3 characters";
+      return t("usernameMinChars");
     if (!isEdit && form.password.length < 6)
-      return "Password must be at least 6 characters";
+      return t("passwordMinChars");
     if (isEdit && form.password && form.password.length < 6)
-      return "Password must be at least 6 characters";
-    if (!form.full_name.trim()) return "Full name is required";
-    if (!form.role_id) return "Role is required";
+      return t("passwordMinChars");
+    if (!form.full_name.trim()) return t("fullNameRequired");
+    if (!form.role_id) return t("roleRequired");
 
-    if (Number(form.role_id) === 3 && !form.store_id) return "Store is required for Seller";
-    if (Number(form.role_id) === 2 && !form.zone_id) return "Zone is required for Manager";
+    if (Number(form.role_id) === 3 && !form.store_id) return t("storeRequiredForSeller");
+    if (Number(form.role_id) === 2 && !form.zone_id) return t("zoneRequiredForManager");
 
     return "";
   };
@@ -151,14 +153,14 @@ export default function AddUser() {
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 64 }}>✅</div>
           <h2 style={{ color: T.text, fontWeight: 900 }}>
-            User {isEdit ? "Updated" : "Created"}
+            {t("user")} {isEdit ? t("updated") : t("created")}
           </h2>
           <p style={{ color: T.textSub }}>
-            {form.full_name} has been saved successfully.
+            {form.full_name} {t("userSavedSuccessfully")}.
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
             <Btn variant="ghost" onClick={() => navigate("/users")}>
-              View Users
+              {t("viewUsers")}
             </Btn>
             {!isEdit && (
               <Btn
@@ -167,7 +169,7 @@ export default function AddUser() {
                   setSaved(false);
                 }}
               >
-                <Ic.Plus /> Add Another
+                <Ic.Plus /> {t("addAnother")}
               </Btn>
             )}
           </div>
@@ -179,7 +181,7 @@ export default function AddUser() {
   if (isEdit && isLoading && !currentUser) {
     return (
       <div style={{ ...card(), padding: 30, color: T.textSub }}>
-        Loading user...
+        {t("loadingUser")}...
       </div>
     );
   }
@@ -210,10 +212,10 @@ export default function AddUser() {
         </div>
         <div>
           <h1 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-            {isEdit ? "Edit User" : "Add User"}
+            {isEdit ? t("editUser") : t("addUser")}
           </h1>
           <p style={{ color: T.textSub, margin: "4px 0 0", fontSize: 12 }}>
-            Create system account with role and branch access
+            {t("createSystemAccountRoleBranch")}
           </p>
         </div>
 
@@ -222,7 +224,7 @@ export default function AddUser() {
           onClick={() => navigate("/users")}
           style={{ marginLeft: "auto" }}
         >
-          <Ic.Close /> Cancel
+          <Ic.Close /> {t("cancel")}
         </Btn>
       </div>
 
@@ -251,7 +253,7 @@ export default function AddUser() {
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
           >
-            <Field label="Full Name *">
+            <Field label={t("fullName") + " *"}>
               <input
                 value={form.full_name}
                 onChange={setField("full_name")}
@@ -259,7 +261,7 @@ export default function AddUser() {
               />
             </Field>
 
-            <Field label="Username *">
+            <Field label={t("username") + " *"}>
               <input
                 value={form.username}
                 onChange={setField("username")}
@@ -267,19 +269,19 @@ export default function AddUser() {
               />
             </Field>
 
-            <Field label={isEdit ? "New Password" : "Password *"}>
+            <Field label={isEdit ? t("newPassword") : t("password") + " *"}>
               <input
                 type="password"
                 value={form.password}
                 onChange={setField("password")}
                 placeholder={
-                  isEdit ? "Keep blank to avoid change" : "Minimum 6 characters"
+                  isEdit ? t("keepBlankToAvoidChange") : t("passwordMinChars")
                 }
                 style={inputStyle()}
               />
             </Field>
 
-            <Field label="Phone">
+            <Field label={t("phone")}>
               <input
                 value={form.phone}
                 onChange={setField("phone")}
@@ -289,7 +291,7 @@ export default function AddUser() {
           </div>
 
           <div style={{ marginTop: 14 }}>
-            <Field label="Email">
+            <Field label={t("email")}>
               <input
                 type="email"
                 value={form.email}
@@ -300,7 +302,7 @@ export default function AddUser() {
           </div>
 
           <div style={{ marginTop: 18 }}>
-            <Field label="Select Role *">
+            <Field label={t("selectRole") + " *"}>
               <div
                 style={{
                   display: "grid",
@@ -354,13 +356,13 @@ export default function AddUser() {
 
           {(Number(form.role_id) === 3 || Number(form.role_id) === 1) && (
             <div style={{ marginTop: 14 }}>
-              <Field label="Assign Store (Required for Seller)">
+              <Field label={t("assignStoreRequiredSeller")}>
                 <select
                   value={form.store_id}
                   onChange={setField("store_id")}
                   style={inputStyle()}
                 >
-                  <option value="">Select store</option>
+                  <option value="">{t("selectStore")}</option>
                   {branches.map((b) => (
                     <option key={b.store_id} value={b.store_id}>
                       {b.store_name}
@@ -373,13 +375,13 @@ export default function AddUser() {
 
           {(Number(form.role_id) === 2 || Number(form.role_id) === 1) && (
             <div style={{ marginTop: 14 }}>
-              <Field label="Assign Zone (Required for Manager)">
+              <Field label={t("assignZoneRequiredManager")}>
                 <select
                   value={form.zone_id}
                   onChange={setField("zone_id")}
                   style={inputStyle()}
                 >
-                  <option value="">Select zone</option>
+                  <option value="">{t("selectZone")}</option>
                   {zones.map((z) => (
                     <option key={z.zone_id} value={z.zone_id}>
                       {z.zone_name}
@@ -405,7 +407,7 @@ export default function AddUser() {
                 checked={form.is_active}
                 onChange={setField("is_active")}
               />
-              Active account
+              {t("activeAccount")}
             </label>
           )}
 
@@ -418,7 +420,7 @@ export default function AddUser() {
             }}
           >
             <Btn variant="ghost" onClick={() => navigate("/users")}>
-              Cancel
+              {t("cancel")}
             </Btn>
             <button
               onClick={handleSubmit}
@@ -434,10 +436,10 @@ export default function AddUser() {
               }}
             >
               {isSubmitting
-                ? "Saving..."
+                ? t("saving") + "..."
                 : isEdit
-                  ? "Save Changes"
-                  : "Create User"}
+                  ? t("saveChanges")
+                  : t("createUser")}
             </button>
           </div>
         </div>
@@ -451,7 +453,7 @@ export default function AddUser() {
               margin: "0 0 12px",
             }}
           >
-            USER PREVIEW
+            {t("userPreview")}
           </p>
 
           <div
@@ -482,11 +484,11 @@ export default function AddUser() {
             </div>
 
             <h3 style={{ color: T.text, margin: "0 0 4px", fontWeight: 900 }}>
-              {form.full_name || "Full Name"}
+              {form.full_name || t("fullName")}
             </h3>
 
             <p style={{ color: T.textMut, margin: 0, fontSize: 12 }}>
-              @{form.username || "username"}
+              @{form.username || t("username")}
             </p>
 
             <div
@@ -499,10 +501,10 @@ export default function AddUser() {
               }}
             >
               <span style={pillStyle()}>
-                {selectedRole?.role_name || "No Role"}
+                {selectedRole?.role_name || t("noRole")}
               </span>
               <span style={pillStyle()}>
-                {form.is_active ? "Active" : "Inactive"}
+                {form.is_active ? t("active") : t("inactive")}
               </span>
             </div>
 
@@ -514,9 +516,9 @@ export default function AddUser() {
                 gap: 8,
               }}
             >
-              <Info label="Email" value={form.email || "—"} />
-              <Info label="Phone" value={form.phone || "—"} />
-              <Info label="Store" value={selectedStore?.store_name || "—"} />
+              <Info label={t("email")} value={form.email || "—"} />
+              <Info label={t("phone")} value={form.phone || "—"} />
+              <Info label={t("store")} value={selectedStore?.store_name || "—"} />
             </div>
           </div>
         </div>
@@ -589,3 +591,5 @@ function pillStyle() {
     textTransform: "uppercase",
   };
 }
+
+

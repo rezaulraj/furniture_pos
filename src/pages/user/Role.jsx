@@ -1,47 +1,53 @@
 import { T, card } from "../../theme/colors";
 import { Badge } from "../../components/Badge";
 import { Ic } from "../../components/Icons";
-
-const roles = [
-  {
-    name: "admin",
-    icon: "🛡️",
-    color: T.red,
-    desc: "Full system access and user management permission.",
-    permissions: [
-      "Create, update and delete users",
-      "Manage products, branches and suppliers",
-      "Approve returns and stock transfer",
-      "View sales, purchases and financial reports",
-    ],
-  },
-  {
-    name: "manager",
-    icon: "📊",
-    color: T.blue,
-    desc: "Store operation and inventory management permission.",
-    permissions: [
-      "Create product, category and purchase",
-      "Manage inventory and stock transfer",
-      "View sales and purchase reports",
-      "Create supplier and customer",
-    ],
-  },
-  {
-    name: "seller",
-    icon: "🛒",
-    color: T.green,
-    desc: "POS, customer and basic stock visibility permission.",
-    permissions: [
-      "Create new sales",
-      "View customers and suppliers",
-      "Check stock alerts",
-      "View sale history assigned to store",
-    ],
-  },
-];
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function Role() {
+  const { t } = useLanguageStore();
+
+  const roles = [
+    {
+      name: t("admin"),
+      id: "admin",
+      icon: "🛡️",
+      color: T.red,
+      desc: t("adminDesc"),
+      permissions: [
+        t("permCreateUpdateDeleteUsers"),
+        t("permManageProductsBranchesSuppliers"),
+        t("permApproveReturnsStockTransfer"),
+        t("permViewSalesPurchasesReports"),
+      ],
+    },
+    {
+      name: t("manager"),
+      id: "manager",
+      icon: "📊",
+      color: T.blue,
+      desc: t("managerDesc"),
+      permissions: [
+        t("permCreateProductCategoryPurchase"),
+        t("permManageInventoryStockTransfer"),
+        t("permViewSalesPurchaseReports"),
+        t("permCreateSupplierCustomer"),
+      ],
+    },
+    {
+      name: t("seller"),
+      id: "seller",
+      icon: "🛒",
+      color: T.green,
+      desc: t("sellerDesc"),
+      permissions: [
+        t("permCreateNewSales"),
+        t("permViewCustomersSuppliers"),
+        t("permCheckStockAlerts"),
+        t("permViewSaleHistoryStore"),
+      ],
+    },
+  ];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -61,10 +67,10 @@ export default function Role() {
 
         <div>
           <h1 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-            User Roles
+            {t("userRoles")}
           </h1>
           <p style={{ color: T.textSub, margin: "4px 0 0", fontSize: 12 }}>
-            Role permission overview for admin, manager and seller
+            {t("rolePermissionOverview")}
           </p>
         </div>
       </div>
@@ -78,7 +84,7 @@ export default function Role() {
       >
         {roles.map((role) => (
           <div
-            key={role.name}
+            key={role.id}
             style={{
               ...card(),
               padding: 20,
@@ -95,9 +101,9 @@ export default function Role() {
               <div style={{ fontSize: 38 }}>{role.icon}</div>
               <Badge
                 color={
-                  role.name === "admin"
+                  role.id === "admin"
                     ? "red"
-                    : role.name === "manager"
+                    : role.id === "manager"
                       ? "blue"
                       : "green"
                 }
@@ -162,11 +168,10 @@ export default function Role() {
 
       <div style={{ ...card(), padding: 18 }}>
         <h3 style={{ color: T.text, marginTop: 0 }}>
-          Backend Route Protection
+          {t("backendRouteProtection")}
         </h3>
         <p style={{ color: T.textSub, fontSize: 13, lineHeight: 1.7 }}>
-          User APIs are protected by auth middleware and admin authorization.
-          Only admin can create, update, toggle status and delete users.
+          {t("backendRouteProtectionDesc")}
         </p>
       </div>
     </div>

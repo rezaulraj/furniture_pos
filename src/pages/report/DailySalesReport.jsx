@@ -4,10 +4,12 @@ import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
 import { StatusBadge } from "../../components/Badge";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function DailySalesReport() {
+  const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, sales: [] });
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -31,21 +33,21 @@ export default function DailySalesReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Daily Sales Report</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Sales summary for {new Date(date).toLocaleDateString()}</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("dailySalesReport")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("salesSummaryFor")} {new Date(date).toLocaleDateString()}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label="Total Revenue" value={money(stats.totalAmount)} icon="💰" color={T.green} />
-        <StatCard label="Total Received" value={money(stats.totalPaid)} icon="📥" color={T.blue} />
-        <StatCard label="Total Due" value={money(stats.totalDue)} icon="⏳" color={T.red} />
-        <StatCard label="Total Invoices" value={data.sales?.length || 0} icon="🧾" color={T.accent} />
+        <StatCard label={t("totalRevenue")} value={money(stats.totalAmount)} icon="💰" color={T.green} />
+        <StatCard label={t("totalReceived")} value={money(stats.totalPaid)} icon="📥" color={T.blue} />
+        <StatCard label={t("totalDue")} value={money(stats.totalDue)} icon="⏳" color={T.red} />
+        <StatCard label={t("totalInvoices")} value={data.sales?.length || 0} icon="🧾" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
-        <Input label="Select Date" type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <Input label={t("selectDate")} type="date" value={date} onChange={e => setDate(e.target.value)} />
         <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
@@ -53,22 +55,22 @@ export default function DailySalesReport() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["Invoice", "Time", "Customer", "Amount", "Paid", "Status"].map(h => (
+              {[t("invoice"), t("time"), t("customer"), t("amount"), t("paid"), t("status")].map(h => (
                 <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
             ) : !data.sales || data.sales.length === 0 ? (
-               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No sales found for this date</td></tr>
+               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noSalesFoundDate")}</td></tr>
             ) : (
               data.sales.map((s, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>
                   <td style={{ padding: "12px 15px", color: T.accent, fontWeight: 700 }}>{s.invoice_number}</td>
                   <td style={{ padding: "12px 15px", color: T.textSub, fontSize: 12 }}>{new Date(s.sale_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                  <td style={{ padding: "12px 15px", color: T.text }}>{s.customer?.full_name || "Walk-in"}</td>
+                  <td style={{ padding: "12px 15px", color: T.text }}>{s.customer?.full_name || t("walkIn")}</td>
                   <td style={{ padding: "12px 15px", color: T.text, fontWeight: 700 }}>{money(s.total_amount)}</td>
                   <td style={{ padding: "12px 15px", color: T.green }}>{money(s.paid_amount)}</td>
                   <td style={{ padding: "12px 15px" }}><StatusBadge status={s.payment_status} /></td>

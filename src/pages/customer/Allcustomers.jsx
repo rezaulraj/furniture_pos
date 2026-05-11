@@ -4,6 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useCustomerStore } from "../../store/customerStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const EMPTY_FORM = {
   full_name: "",
@@ -16,6 +17,7 @@ const EMPTY_FORM = {
 };
 
 export default function AllCustomers() {
+  const { t, lang } = useLanguageStore();
   const {
     customers,
     isLoading,
@@ -119,9 +121,9 @@ export default function AllCustomers() {
   });
 
   const validate = () => {
-    if (!form.full_name.trim()) return "Full name is required";
+    if (!form.full_name.trim()) return lang === "bn" ? "পুরো নাম প্রয়োজন" : "Full name is required";
     if (form.credit_limit !== "" && Number(form.credit_limit) < 0) {
-      return "Credit limit must be 0 or more";
+      return lang === "bn" ? "ক্রেডিট লিমিট ০ বা তার বেশি হতে হবে" : "Credit limit must be 0 or more";
     }
     return "";
   };
@@ -135,7 +137,7 @@ export default function AllCustomers() {
       closeModal();
     } catch {
       setFormError(
-        useCustomerStore.getState().error || "Failed to create customer",
+        useCustomerStore.getState().error || (lang === "bn" ? "কাস্টমার তৈরি করতে ব্যর্থ" : "Failed to create customer"),
       );
     }
   };
@@ -149,7 +151,7 @@ export default function AllCustomers() {
       closeModal();
     } catch {
       setFormError(
-        useCustomerStore.getState().error || "Failed to update customer",
+        useCustomerStore.getState().error || (lang === "bn" ? "কাস্টমার আপডেট করতে ব্যর্থ" : "Failed to update customer"),
       );
     }
   };
@@ -162,8 +164,8 @@ export default function AllCustomers() {
   };
 
   const total = customers.length;
-  const active = customers.filter((c) => c.is_active).length;
-  const inactive = customers.filter((c) => !c.is_active).length;
+  const activeCount = customers.filter((c) => c.is_active).length;
+  const inactiveCount = customers.filter((c) => !c.is_active).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -175,9 +177,9 @@ export default function AllCustomers() {
         }}
       >
         {[
-          ["Total Customers", total, "👥", T.accent],
-          ["Active", active, "✅", T.green],
-          ["Inactive", inactive, "🚫", T.red],
+          [t("totalCustomers"), total, "👥", T.accent],
+          [t("activeCustomers"), activeCount, "✅", T.green],
+          [t("inactiveCustomers"), inactiveCount, "🚫", T.red],
         ].map(([label, value, icon, color]) => (
           <div
             key={label}
@@ -219,7 +221,7 @@ export default function AllCustomers() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search customer..."
+          placeholder={t("searchCustomer")}
           style={{ ...inputStyle(), flex: 1, minWidth: 220 }}
         />
 
@@ -238,12 +240,12 @@ export default function AllCustomers() {
               cursor: "pointer",
             }}
           >
-            {s}
+            {t(s)}
           </button>
         ))}
 
         <Btn onClick={openCreate}>
-          <Ic.Plus /> Add Customer
+          <Ic.Plus /> {t("addCustomer")}
         </Btn>
       </div>
 
@@ -282,10 +284,10 @@ export default function AllCustomers() {
           >
             <div style={{ fontSize: 48 }}>👥</div>
             <p style={{ color: T.textSub, fontWeight: 700 }}>
-              No customers found
+              {t("noCustomersFound")}
             </p>
             <Btn onClick={openCreate}>
-              <Ic.Plus /> Add Customer
+              <Ic.Plus /> {t("addCustomer")}
             </Btn>
           </div>
         ) : (
@@ -327,7 +329,7 @@ export default function AllCustomers() {
                   </p>
                 </div>
                 <Badge color={c.is_active ? "green" : "red"} small>
-                  {c.is_active ? "ACTIVE" : "INACTIVE"}
+                  {c.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
                 </Badge>
               </div>
 
@@ -339,11 +341,11 @@ export default function AllCustomers() {
                   gap: 8,
                 }}
               >
-                <InfoLine label="Phone" value={c.phone || "—"} />
-                <InfoLine label="Email" value={c.email || "—"} />
-                <InfoLine label="Type" value={c.customer_type || "—"} />
+                <InfoLine label={t("phone")} value={c.phone || "—"} />
+                <InfoLine label={t("email")} value={c.email || "—"} />
+                <InfoLine label={t("type")} value={c.customer_type || "—"} />
                 <InfoLine
-                  label="Credit"
+                  label={t("credit")}
                   value={
                     c.credit_limit
                       ? `৳${Number(c.credit_limit).toLocaleString()}`
@@ -357,13 +359,13 @@ export default function AllCustomers() {
                   onClick={() => openView(c)}
                   style={actionBtn("rgba(34,197,94,.10)", T.green)}
                 >
-                  <Ic.Eye /> View
+                  <Ic.Eye /> {t("view")}
                 </button>
                 <button
                   onClick={() => openEdit(c)}
                   style={actionBtn("rgba(172,82,8,.12)", T.accent)}
                 >
-                  <Ic.Edit /> Edit
+                  <Ic.Edit /> {t("edit")}
                 </button>
                 <button onClick={() => openDelete(c)} style={iconBtn()}>
                   <Ic.Trash />
@@ -409,6 +411,7 @@ function CustomerModal({
   loading,
   error,
 }) {
+  const { t } = useLanguageStore();
   const isView = mode === "view";
   const setField = (key) => (e) =>
     setForm((p) => ({ ...p, [key]: e.target.value }));
@@ -428,10 +431,10 @@ function CustomerModal({
       <div style={{ ...card(), width: "100%", maxWidth: 620, padding: 22 }}>
         <h2 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
           {mode === "create"
-            ? "Add Customer"
+            ? t("addCustomer")
             : mode === "edit"
-              ? "Edit Customer"
-              : "Customer Details"}
+              ? t("edit") + " " + t("customer")
+              : t("customerDetails")}
         </h2>
 
         {error && !isView && <p style={{ color: T.red }}>{error}</p>}
@@ -444,7 +447,7 @@ function CustomerModal({
             gap: 12,
           }}
         >
-          <Field label="Full Name *">
+          <Field label={`${t("fullName")} *`}>
             <input
               readOnly={isView}
               value={form.full_name}
@@ -452,7 +455,7 @@ function CustomerModal({
               style={inputStyle(isView)}
             />
           </Field>
-          <Field label="Customer Type">
+          <Field label={t("customerType")}>
             <input
               readOnly={isView}
               value={form.customer_type}
@@ -460,7 +463,7 @@ function CustomerModal({
               style={inputStyle(isView)}
             />
           </Field>
-          <Field label="Phone">
+          <Field label={t("phone")}>
             <input
               readOnly={isView}
               value={form.phone}
@@ -468,7 +471,7 @@ function CustomerModal({
               style={inputStyle(isView)}
             />
           </Field>
-          <Field label="Email">
+          <Field label={t("email")}>
             <input
               readOnly={isView}
               value={form.email}
@@ -476,7 +479,7 @@ function CustomerModal({
               style={inputStyle(isView)}
             />
           </Field>
-          <Field label="Credit Limit">
+          <Field label={t("creditLimit")}>
             <input
               readOnly={isView}
               type="number"
@@ -488,7 +491,7 @@ function CustomerModal({
         </div>
 
         <div style={{ marginTop: 12 }}>
-          <Field label="Address">
+          <Field label={t("address")}>
             <textarea
               readOnly={isView}
               rows={4}
@@ -509,14 +512,14 @@ function CustomerModal({
                   setForm((p) => ({ ...p, is_active: e.target.checked }))
                 }
               />{" "}
-              Active customer
+              {t("active")} {t("customer").toLowerCase()}
             </label>
           </div>
         )}
 
         {isView && customer?.sales && (
           <p style={{ color: T.textSub, fontSize: 12 }}>
-            Total sales records: {customer.sales.length}
+            {t("totalSalesRecords")}: {customer.sales.length}
           </p>
         )}
 
@@ -526,7 +529,7 @@ function CustomerModal({
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            {isView ? "Close" : "Cancel"}
+            {isView ? t("cancel") : t("cancel")}
           </Btn>
           {!isView && (
             <Btn
@@ -534,10 +537,10 @@ function CustomerModal({
               style={{ flex: 1, justifyContent: "center" }}
             >
               {loading
-                ? "Saving..."
+                ? t("saving")
                 : mode === "create"
-                  ? "Create Customer"
-                  : "Save Changes"}
+                  ? t("addCustomer")
+                  : t("saveChanges")}
             </Btn>
           )}
         </div>
@@ -547,6 +550,7 @@ function CustomerModal({
 }
 
 function DeleteModal({ customer, loading, onClose, onConfirm }) {
+  const { t } = useLanguageStore();
   return (
     <div
       style={{
@@ -560,9 +564,9 @@ function DeleteModal({ customer, loading, onClose, onConfirm }) {
     >
       <div style={{ ...card(), width: 390, padding: 24, textAlign: "center" }}>
         <div style={{ fontSize: 42 }}>🗑️</div>
-        <h3 style={{ color: T.text }}>Remove Customer?</h3>
+        <h3 style={{ color: T.text }}>{t("removeCustomerQuestion")}</h3>
         <p style={{ color: T.textSub }}>
-          {customer.full_name} will be marked inactive.
+          {customer.full_name} {t("removeCustomerWarning")}
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <Btn
@@ -570,7 +574,7 @@ function DeleteModal({ customer, loading, onClose, onConfirm }) {
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            Cancel
+            {t("cancel")}
           </Btn>
           <button
             onClick={onConfirm}
@@ -584,7 +588,7 @@ function DeleteModal({ customer, loading, onClose, onConfirm }) {
               fontWeight: 800,
             }}
           >
-            {loading ? "Removing..." : "Remove"}
+            {loading ? t("removing") : t("remove")}
           </button>
         </div>
       </div>

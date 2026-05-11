@@ -7,6 +7,7 @@ import { useProductStore } from "../../store/productStore";
 import { useCustomerStore } from "../../store/customerStore";
 import { useSaleStore } from "../../store/saleStore";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguageStore } from "../../store/languageStore";
 import SaleInvoicePDF from "../../components/SaleInvoicePDF";
 
 const money = (value) => `৳${Number(value || 0).toLocaleString()}`;
@@ -15,6 +16,7 @@ export default function NewSalePage() {
   const customerDropRef = useRef(null);
 
   const { user } = useAuthStore();
+  const { t, lang } = useLanguageStore();
   const {
     products,
     fetchProducts,
@@ -142,7 +144,7 @@ export default function NewSalePage() {
           product_id: product.product_id,
           product_name: product.product_name,
           sku: product.sku,
-          category_name: product.category?.category_name || "No Category",
+          category_name: product.category?.category_name || t("noCategory"),
           unit_price: Number(product.selling_price || 0),
           qty: 1,
           image_url: product.image_url || "",
@@ -199,7 +201,7 @@ export default function NewSalePage() {
 
   const handleCreateCustomer = async () => {
     if (!newCustomer.full_name.trim()) {
-      setFormError("Customer name is required");
+      setFormError(t("customerNameRequired"));
       return;
     }
 
@@ -224,14 +226,14 @@ export default function NewSalePage() {
       });
       setFormError("");
     } catch {
-      setFormError("Failed to create customer");
+      setFormError(t("failedCreateCustomer"));
     }
   };
 
   const validateSale = () => {
     if (!user?.store_id) return "Logged-in user store_id not found";
-    if (!selectedItems.length) return "Please add at least one product";
-    if (paid < 0) return "Paid amount cannot be negative";
+    if (!selectedItems.length) return t("addOneProduct");
+    if (paid < 0) return t("paidAmountNegative");
     return "";
   };
 
@@ -290,7 +292,7 @@ export default function NewSalePage() {
       setFormError(
         error?.response?.data?.message ||
           error?.response?.data?.errors ||
-          "Sale failed",
+          t("saleFailed"),
       );
     }
   };
@@ -350,7 +352,7 @@ export default function NewSalePage() {
             <input
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
-              placeholder="Search product by name or SKU..."
+              placeholder={t("searchProduct")}
               style={{
                 flex: 1,
                 border: "none",
@@ -365,7 +367,7 @@ export default function NewSalePage() {
 
           {selectedRows.size > 0 && (
             <Btn variant="danger" onClick={removeSelected}>
-              <Ic.Trash /> Remove {selectedRows.size}
+              <Ic.Trash /> {t("remove")} {selectedRows.size}
             </Btn>
           )}
         </div>
@@ -381,10 +383,10 @@ export default function NewSalePage() {
           >
             {productsLoading ? (
               <p style={{ color: T.textSub, padding: 14 }}>
-                Loading products...
+                {t("loadingProducts")}
               </p>
             ) : filteredProducts.length === 0 ? (
-              <p style={{ color: T.textSub, padding: 14 }}>No products found</p>
+              <p style={{ color: T.textSub, padding: 14 }}>{t("noProductsFound")}</p>
             ) : (
               filteredProducts.map((p) => (
                 <button
@@ -421,7 +423,7 @@ export default function NewSalePage() {
                         fontSize: 11,
                       }}
                     >
-                      {p.sku} • {p.category?.category_name || "No Category"}
+                      {p.sku} • {p.category?.category_name || t("noCategory")}
                     </p>
                   </div>
                   <strong style={{ color: T.green }}>
@@ -459,10 +461,10 @@ export default function NewSalePage() {
                 fontWeight: 900,
               }}
             >
-              Sale Items
+              {t("saleItems")}
             </h3>
             <Badge color="green" small>
-              {selectedItems.length} products • {totalQty} qty
+              {selectedItems.length} {t("products").toLowerCase()} • {totalQty} {t("quantity").toLowerCase()}
             </Badge>
           </div>
 
@@ -479,7 +481,7 @@ export default function NewSalePage() {
                 <div>
                   <div style={{ fontSize: 52 }}>🛒</div>
                   <p style={{ color: T.textSub, fontSize: 13 }}>
-                    No items added yet. Search product above.
+                    {t("noItemsAdded")}
                   </p>
                 </div>
               </div>
@@ -494,11 +496,11 @@ export default function NewSalePage() {
                         onChange={toggleAll}
                       />
                     </th>
-                    <th style={th()}>Product</th>
-                    <th style={th()}>SKU</th>
-                    <th style={th()}>Price</th>
-                    <th style={th()}>Qty</th>
-                    <th style={th()}>Total</th>
+                    <th style={th()}>{t("product")}</th>
+                    <th style={th()}>{t("sku")}</th>
+                    <th style={th()}>{t("price")}</th>
+                    <th style={th()}>{t("quantity")}</th>
+                    <th style={th()}>{t("total")}</th>
                     <th style={th()}></th>
                   </tr>
                 </thead>
@@ -641,7 +643,7 @@ export default function NewSalePage() {
               marginBottom: 10,
             }}
           >
-            <p style={sectionTitle()}>CUSTOMER</p>
+            <p style={sectionTitle()}>{t("customer").toUpperCase()}</p>
             <button
               onClick={() => setShowCustomerCreate(true)}
               style={{
@@ -655,7 +657,7 @@ export default function NewSalePage() {
                 fontWeight: 800,
               }}
             >
-              + New
+              + {t("new")}
             </button>
           </div>
 
@@ -678,7 +680,7 @@ export default function NewSalePage() {
                 <p
                   style={{ color: T.textSub, margin: "4px 0 0", fontSize: 11 }}
                 >
-                  {customer.phone || "No phone"}
+                  {customer.phone || t("noPhone")}
                 </p>
               </div>
               <button
@@ -702,7 +704,7 @@ export default function NewSalePage() {
                   setShowCustomerDropdown(true);
                 }}
                 onFocus={() => setShowCustomerDropdown(true)}
-                placeholder="Search customer or keep walk-in..."
+                placeholder={t("searchCustomerPlaceholder")}
                 style={inputStyle()}
               />
 
@@ -728,7 +730,7 @@ export default function NewSalePage() {
                     }}
                     style={dropItemStyle()}
                   >
-                    🚶 Walk-in Customer
+                    🚶 {t("walkInCustomer")}
                   </button>
 
                   {filteredCustomers.map((c) => (
@@ -755,7 +757,7 @@ export default function NewSalePage() {
                           }}
                         >
                           {c.customer_code || `ID: ${c.customer_id}`} •{" "}
-                          {c.phone || "No phone"}
+                          {c.phone || t("noPhone")}
                         </p>
                       </div>
                     </button>
@@ -767,21 +769,21 @@ export default function NewSalePage() {
         </div>
 
         <div style={{ ...card(), padding: 14 }}>
-          <p style={sectionTitle()}>PAYMENT & DISCOUNT</p>
+          <p style={sectionTitle()}>{t("paymentAndDiscount")}</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Field label="Discount Type">
+            <Field label={t("discountType")}>
               <select
                 value={discountType}
                 onChange={(e) => setDiscountType(e.target.value)}
                 style={inputStyle()}
               >
-                <option value="percentage">Percentage</option>
-                <option value="fixed">Fixed</option>
+                <option value="percentage">{t("percentage")}</option>
+                <option value="fixed">{t("fixed")}</option>
               </select>
             </Field>
 
-            <Field label="Discount Value">
+            <Field label={t("discountValue")}>
               <input
                 type="number"
                 value={discountValue}
@@ -790,7 +792,7 @@ export default function NewSalePage() {
               />
             </Field>
 
-            <Field label="VAT / Tax (%)">
+            <Field label={t("vatTax")}>
               <input
                 type="number"
                 value={vat}
@@ -799,7 +801,7 @@ export default function NewSalePage() {
               />
             </Field>
 
-            <Field label="Paid Amount">
+            <Field label={t("paidAmount")}>
               <input
                 type="number"
                 value={paidAmount}
@@ -809,18 +811,18 @@ export default function NewSalePage() {
               />
             </Field>
 
-            <Field label="Payment Method">
+            <Field label={t("paymentMethod")}>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 style={inputStyle()}
               >
-                <option value="cash">Cash</option>
-                <option value="bank">Bank</option>
+                <option value="cash">{t("cash")}</option>
+                <option value="bank">{t("bank")}</option>
               </select>
             </Field>
 
-            <Field label="Notes">
+            <Field label={t("notes")}>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -832,16 +834,16 @@ export default function NewSalePage() {
         </div>
 
         <div style={{ ...card(), padding: 14, background: T.bgAlt }}>
-          <p style={sectionTitle()}>BILL SUMMARY</p>
+          <p style={sectionTitle()}>{t("billSummary").toUpperCase()}</p>
 
-          <SummaryRow label="Subtotal" value={money(subtotal)} />
+          <SummaryRow label={t("subTotal")} value={money(subtotal)} />
           <SummaryRow
-            label="Discount"
+            label={t("discount")}
             value={`- ${money(discountAmount)}`}
             color={T.yellow}
           />
           <SummaryRow
-            label={`Tax (${vat || 0}%)`}
+            label={`${t("tax")} (${vat || 0}%)`}
             value={money(taxAmount)}
             color={T.blue}
           />
@@ -849,20 +851,20 @@ export default function NewSalePage() {
           <div style={{ height: 1, background: T.border, margin: "10px 0" }} />
 
           <SummaryRow
-            label="Total"
+            label={t("total")}
             value={money(totalAmount)}
             strong
             color={T.green}
           />
-          <SummaryRow label="Paid" value={money(paid)} color={T.green} />
+          <SummaryRow label={t("paid")} value={money(paid)} color={T.green} />
           <SummaryRow
-            label="Due"
+            label={t("due")}
             value={money(due)}
             color={due > 0 ? T.red : T.green}
           />
 
           {change > 0 && (
-            <SummaryRow label="Change" value={money(change)} color={T.blue} />
+            <SummaryRow label={t("change")} value={money(change)} color={T.blue} />
           )}
 
           <button
@@ -885,7 +887,7 @@ export default function NewSalePage() {
               opacity: isSubmitting || !selectedItems.length ? 0.65 : 1,
             }}
           >
-            {isSubmitting ? "Saving Sale..." : "Generate Invoice & Save"}
+            {isSubmitting ? t("savingSale") : t("generateInvoice")}
           </button>
         </div>
       </div>
@@ -904,12 +906,12 @@ export default function NewSalePage() {
         >
           <div style={{ ...card(), width: "100%", maxWidth: 520, padding: 22 }}>
             <h2 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-              Create Customer
+              {t("createCustomer")}
             </h2>
 
             <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
               <input
-                placeholder="Full name *"
+                placeholder={`${t("fullName")} *`}
                 value={newCustomer.full_name}
                 onChange={(e) =>
                   setNewCustomer((p) => ({ ...p, full_name: e.target.value }))
@@ -917,7 +919,7 @@ export default function NewSalePage() {
                 style={inputStyle()}
               />
               <input
-                placeholder="Phone"
+                placeholder={t("phone")}
                 value={newCustomer.phone}
                 onChange={(e) =>
                   setNewCustomer((p) => ({ ...p, phone: e.target.value }))
@@ -925,7 +927,7 @@ export default function NewSalePage() {
                 style={inputStyle()}
               />
               <input
-                placeholder="Email"
+                placeholder={t("email")}
                 value={newCustomer.email}
                 onChange={(e) =>
                   setNewCustomer((p) => ({ ...p, email: e.target.value }))
@@ -933,7 +935,7 @@ export default function NewSalePage() {
                 style={inputStyle()}
               />
               <textarea
-                placeholder="Address"
+                placeholder={t("address")}
                 value={newCustomer.address}
                 onChange={(e) =>
                   setNewCustomer((p) => ({ ...p, address: e.target.value }))
@@ -950,9 +952,9 @@ export default function NewSalePage() {
                 }
                 style={inputStyle()}
               >
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-                <option value="vip">VIP</option>
+                <option value="retail">{t("retail")}</option>
+                <option value="wholesale">{t("wholesale")}</option>
+                <option value="vip">{t("vip")}</option>
               </select>
             </div>
 
@@ -962,13 +964,13 @@ export default function NewSalePage() {
                 onClick={() => setShowCustomerCreate(false)}
                 style={{ flex: 1, justifyContent: "center" }}
               >
-                Cancel
+                {t("cancel")}
               </Btn>
               <Btn
                 onClick={handleCreateCustomer}
                 style={{ flex: 1, justifyContent: "center" }}
               >
-                Create Customer
+                {t("createCustomer")}
               </Btn>
             </div>
           </div>

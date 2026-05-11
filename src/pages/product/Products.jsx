@@ -6,6 +6,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useProductStore } from "../../store/productStore";
 import { useCategoryStore } from "../../store/categoryStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const currency = (value) => {
   const num = Number(value || 0);
@@ -13,6 +14,7 @@ const currency = (value) => {
 };
 
 const ViewModal = ({ product, onClose, onEdit }) => {
+  const { t } = useLanguageStore();
   const margin =
     product?.cost_price && product?.selling_price
       ? (
@@ -94,7 +96,7 @@ const ViewModal = ({ product, onClose, onEdit }) => {
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <Badge color={product?.is_active ? "green" : "red"} small>
-                    {product?.is_active ? "ACTIVE" : "INACTIVE"}
+                    {product?.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
                   </Badge>
                   {product?.category?.category_name && (
                     <Badge color="purple" small>
@@ -168,17 +170,17 @@ const ViewModal = ({ product, onClose, onEdit }) => {
             }}
           >
             <InfoStat
-              label="Cost Price"
+              label={t("costPrice")}
               value={currency(product?.cost_price)}
               color={T.blue}
             />
             <InfoStat
-              label="Selling Price"
+              label={t("sellingPrice")}
               value={currency(product?.selling_price)}
               color={T.green}
             />
             <InfoStat
-              label="Margin"
+              label={t("margin")}
               value={margin ? `${margin}%` : "—"}
               color={T.accent}
             />
@@ -190,17 +192,17 @@ const ViewModal = ({ product, onClose, onEdit }) => {
               padding: "14px 16px",
             }}
           >
-            <SectionTitle>DETAILS</SectionTitle>
-            <DetailRow label="Brand" value={product?.brand || "—"} />
-            <DetailRow label="Material" value={product?.material || "—"} />
-            <DetailRow label="Color" value={product?.color || "—"} />
-            <DetailRow label="Dimensions" value={product?.dimensions || "—"} />
+            <SectionTitle>{t("details").toUpperCase()}</SectionTitle>
+            <DetailRow label={t("brand")} value={product?.brand || "—"} />
+            <DetailRow label={t("material")} value={product?.material || "—"} />
+            <DetailRow label={t("color")} value={product?.color || "—"} />
+            <DetailRow label={t("dimensions")} value={product?.dimensions || "—"} />
             <DetailRow
-              label="Category"
+              label={t("category")}
               value={product?.category?.category_name || "—"}
             />
             <DetailRow
-              label="Created"
+              label={t("date")}
               value={
                 product?.created_at
                   ? new Date(product.created_at).toLocaleDateString()
@@ -216,7 +218,7 @@ const ViewModal = ({ product, onClose, onEdit }) => {
                 padding: "14px 16px",
               }}
             >
-              <SectionTitle>DESCRIPTION</SectionTitle>
+              <SectionTitle>{t("description").toUpperCase()}</SectionTitle>
               <p
                 style={{
                   color: T.textSub,
@@ -236,13 +238,13 @@ const ViewModal = ({ product, onClose, onEdit }) => {
               onClick={onClose}
               style={{ flex: 1, justifyContent: "center" }}
             >
-              Close
+              {t("cancel")}
             </Btn>
             <Btn
               onClick={() => onEdit(product)}
               style={{ flex: 1, justifyContent: "center" }}
             >
-              <Ic.Edit /> Edit Product
+              <Ic.Edit /> {t("editProduct")}
             </Btn>
           </div>
         </div>
@@ -251,135 +253,139 @@ const ViewModal = ({ product, onClose, onEdit }) => {
   );
 };
 
-const DeleteModal = ({ product, loading, onClose, onConfirm }) => (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.78)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 1000,
-      backdropFilter: "blur(5px)",
-      padding: 16,
-    }}
-  >
+const DeleteModal = ({ product, loading, onClose, onConfirm }) => {
+  const { t } = useLanguageStore();
+  return (
     <div
       style={{
-        ...card(),
-        width: "100%",
-        maxWidth: 430,
-        padding: "28px 26px",
-        boxShadow: "0 28px 70px rgba(0,0,0,0.5)",
-        textAlign: "center",
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.78)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        backdropFilter: "blur(5px)",
+        padding: 16,
       }}
     >
       <div
         style={{
-          width: 64,
-          height: 64,
-          borderRadius: 18,
-          background: "rgba(239,68,68,0.12)",
-          border: "2px solid rgba(239,68,68,0.3)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 32,
-          margin: "0 auto 18px",
+          ...card(),
+          width: "100%",
+          maxWidth: 430,
+          padding: "28px 26px",
+          boxShadow: "0 28px 70px rgba(0,0,0,0.5)",
+          textAlign: "center",
         }}
       >
-        🗑️
-      </div>
-
-      <h3
-        style={{
-          color: T.text,
-          fontWeight: 900,
-          fontSize: 18,
-          margin: "0 0 8px",
-        }}
-      >
-        Delete Product?
-      </h3>
-
-      <p
-        style={{
-          color: T.textSub,
-          fontSize: 13,
-          margin: "0 0 20px",
-          lineHeight: 1.6,
-        }}
-      >
-        You're about to delete{" "}
-        <strong style={{ color: T.text }}>{product?.product_name}</strong>.
-      </p>
-
-      <div
-        style={{
-          padding: "12px 14px",
-          background: "rgba(248,113,113,0.08)",
-          border: "1px solid rgba(248,113,113,0.22)",
-          borderRadius: 10,
-          marginBottom: 20,
-          textAlign: "left",
-        }}
-      >
-        <p
+        <div
           style={{
-            color: T.text,
-            fontWeight: 700,
-            fontSize: 12.5,
-            margin: 0,
+            width: 64,
+            height: 64,
+            borderRadius: 18,
+            background: "rgba(239,68,68,0.12)",
+            border: "2px solid rgba(239,68,68,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 32,
+            margin: "0 auto 18px",
           }}
         >
-          {product?.product_name}
-        </p>
+          🗑️
+        </div>
+
+        <h3
+          style={{
+            color: T.text,
+            fontWeight: 900,
+            fontSize: 18,
+            margin: "0 0 8px",
+          }}
+        >
+          {t("deleteProductQuestion")}
+        </h3>
+
         <p
           style={{
             color: T.textSub,
-            fontSize: 10.5,
-            margin: "4px 0 0",
-          }}
-        >
-          {product?.sku} • {product?.category?.category_name || "No Category"}
-        </p>
-      </div>
-
-      <div style={{ display: "flex", gap: 10 }}>
-        <Btn
-          variant="ghost"
-          onClick={onClose}
-          style={{ flex: 1, justifyContent: "center" }}
-        >
-          Cancel
-        </Btn>
-
-        <button
-          onClick={onConfirm}
-          disabled={loading}
-          style={{
-            flex: 1,
-            padding: "10px",
-            background: "linear-gradient(135deg,#dc2626,#991b1b)",
-            border: "none",
-            borderRadius: 9,
-            color: "#fff",
-            fontWeight: 700,
             fontSize: 13,
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.7 : 1,
+            margin: "0 0 20px",
+            lineHeight: 1.6,
           }}
         >
-          {loading ? "Deleting..." : "Delete"}
-        </button>
+          {t("deleteProductWarning")}{" "}
+          <strong style={{ color: T.text }}>{product?.product_name}</strong>.
+        </p>
+
+        <div
+          style={{
+            padding: "12px 14px",
+            background: "rgba(248,113,113,0.08)",
+            border: "1px solid rgba(248,113,113,0.22)",
+            borderRadius: 10,
+            marginBottom: 20,
+            textAlign: "left",
+          }}
+        >
+          <p
+            style={{
+              color: T.text,
+              fontWeight: 700,
+              fontSize: 12.5,
+              margin: 0,
+            }}
+          >
+            {product?.product_name}
+          </p>
+          <p
+            style={{
+              color: T.textSub,
+              fontSize: 10.5,
+              margin: "4px 0 0",
+            }}
+          >
+            {product?.sku} • {product?.category?.category_name || t("noCategory")}
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <Btn
+            variant="ghost"
+            onClick={onClose}
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            {t("cancel")}
+          </Btn>
+
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: "10px",
+              background: "linear-gradient(135deg,#dc2626,#991b1b)",
+              border: "none",
+              borderRadius: 9,
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            {loading ? t("deleting") : t("delete")}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function Products() {
   const navigate = useNavigate();
+  const { t } = useLanguageStore();
 
   const {
     products,
@@ -408,8 +414,8 @@ export default function Products() {
   }, [fetchProducts, fetchCategories, clearError]);
 
   const categoryOptions = useMemo(
-    () => [{ category_id: "all", category_name: "All" }, ...categories],
-    [categories],
+    () => [{ category_id: "all", category_name: t("all") }, ...categories],
+    [categories, t],
   );
 
   const filtered = useMemo(() => {
@@ -520,30 +526,30 @@ export default function Products() {
       >
         {[
           {
-            label: "Total Products",
+            label: t("totalProducts"),
             value: totalProducts,
-            sub: `${activeCount} active`,
+            sub: `${activeCount} ${t("active").toLowerCase()}`,
             color: T.accent,
             icon: "📦",
           },
           {
-            label: "Inventory Value",
+            label: t("inventoryValue"),
             value: currency(totalValue),
-            sub: "At selling price",
+            sub: t("atSellingPrice"),
             color: T.green,
             icon: "💰",
           },
           {
-            label: "Inactive",
+            label: t("inactive"),
             value: inactiveCount,
-            sub: "Hidden products",
+            sub: t("hiddenProducts"),
             color: T.red,
             icon: "🚫",
           },
           {
-            label: "Categories",
+            label: t("categories"),
             value: categories.length,
-            sub: "Available groups",
+            sub: t("availableGroups"),
             color: T.blue,
             icon: "🗂️",
           },
@@ -634,7 +640,7 @@ export default function Products() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, SKU, brand..."
+            placeholder={t("searchProductPlaceholder")}
             style={{
               flex: 1,
               border: "none",
@@ -702,7 +708,7 @@ export default function Products() {
         </div>
 
         <Btn onClick={() => navigate("/products/add")}>
-          <Ic.Plus /> Add Product
+          <Ic.Plus /> {t("addProduct")}
         </Btn>
       </div>
 
@@ -729,8 +735,8 @@ export default function Products() {
         }}
       >
         <p style={{ color: T.textSub, fontSize: 12, margin: 0 }}>
-          Showing <strong style={{ color: T.text }}>{filtered.length}</strong>{" "}
-          of {products.length} products
+          {t("showing")} <strong style={{ color: T.text }}>{filtered.length}</strong>{" "}
+          {t("of")} {products.length} {t("products").toLowerCase()}
         </p>
 
         <div style={{ display: "flex", gap: 6 }}>
@@ -738,16 +744,16 @@ export default function Products() {
             onClick={() => sortBy("product_name")}
             active={sortField === "product_name"}
           >
-            Name <SortArrow field="product_name" />
+            {t("productName")} <SortArrow field="product_name" />
           </SortChip>
           <SortChip
             onClick={() => sortBy("selling_price")}
             active={sortField === "selling_price"}
           >
-            Price <SortArrow field="selling_price" />
+            {t("price")} <SortArrow field="selling_price" />
           </SortChip>
           <SortChip onClick={() => sortBy("sku")} active={sortField === "sku"}>
-            SKU <SortArrow field="sku" />
+            {t("sku")} <SortArrow field="sku" />
           </SortChip>
         </div>
       </div>
@@ -825,7 +831,7 @@ export default function Products() {
 
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <Badge color={p.is_active ? "green" : "red"} small>
-                        {p.is_active ? "ACTIVE" : "INACTIVE"}
+                        {p.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
                       </Badge>
                     </div>
                   </div>

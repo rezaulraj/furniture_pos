@@ -4,6 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useCategoryStore } from "../../store/categoryStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const emptyForm = {
   category_name: "",
@@ -20,6 +21,7 @@ const CategoryModal = ({
   onSubmit,
   error,
 }) => {
+  const { t } = useLanguageStore();
   const isEdit = mode === "edit";
 
   return (
@@ -63,7 +65,7 @@ const CategoryModal = ({
                 fontWeight: 900,
               }}
             >
-              {isEdit ? "Edit Category" : "Create Category"}
+              {isEdit ? t("editCategory") : t("createCategory")}
             </h2>
             <p
               style={{
@@ -72,7 +74,7 @@ const CategoryModal = ({
                 fontSize: 12,
               }}
             >
-              Only necessary fields are shown
+              {t("onlyNecessaryFields")}
             </p>
           </div>
 
@@ -129,7 +131,7 @@ const CategoryModal = ({
                 letterSpacing: "0.06em",
               }}
             >
-              CATEGORY NAME *
+              {t("categoryName").toUpperCase()} *
             </label>
             <input
               value={form.category_name}
@@ -139,7 +141,7 @@ const CategoryModal = ({
                   category_name: e.target.value,
                 }))
               }
-              placeholder="Enter category name"
+              placeholder={t("enterCategoryName")}
               style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -165,7 +167,7 @@ const CategoryModal = ({
                 letterSpacing: "0.06em",
               }}
             >
-              DESCRIPTION
+              {t("description").toUpperCase()}
             </label>
             <textarea
               rows={4}
@@ -176,7 +178,7 @@ const CategoryModal = ({
                   description: e.target.value,
                 }))
               }
-              placeholder="Optional description"
+              placeholder={t("optionalDescription")}
               style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -219,7 +221,7 @@ const CategoryModal = ({
                   fontSize: 13,
                 }}
               >
-                Status
+                {t("status")}
               </p>
               <p
                 style={{
@@ -228,7 +230,7 @@ const CategoryModal = ({
                   fontSize: 11,
                 }}
               >
-                {form.is_active ? "Active category" : "Inactive category"}
+                {form.is_active ? t("activeCategory") : t("inactiveCategory")}
               </p>
             </div>
 
@@ -298,11 +300,11 @@ const CategoryModal = ({
           >
             {loading
               ? isEdit
-                ? "Saving..."
-                : "Creating..."
+                ? t("saving")
+                : t("creating")
               : isEdit
-                ? "Save Changes"
-                : "Create Category"}
+                ? t("saveChanges")
+                : t("createCategory")}
           </button>
         </div>
       </div>
@@ -311,6 +313,7 @@ const CategoryModal = ({
 };
 
 const DeleteModal = ({ category, loading, onClose, onConfirm }) => {
+  const { t } = useLanguageStore();
   return (
     <div
       style={{
@@ -359,7 +362,7 @@ const DeleteModal = ({ category, loading, onClose, onConfirm }) => {
             fontSize: 18,
           }}
         >
-          Delete Category?
+          {t("deleteCategoryQuestion")}
         </h3>
 
         <p
@@ -371,9 +374,9 @@ const DeleteModal = ({ category, loading, onClose, onConfirm }) => {
             margin: "10px 0 22px",
           }}
         >
-          This will mark{" "}
+          {t("thisWillMark")}{" "}
           <strong style={{ color: T.text }}>{category?.category_name}</strong>{" "}
-          as inactive.
+          {t("asInactive")}.
         </p>
 
         <div style={{ display: "flex", gap: 10 }}>
@@ -400,7 +403,7 @@ const DeleteModal = ({ category, loading, onClose, onConfirm }) => {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? "Deleting..." : "Delete"}
+            {loading ? t("deleting") : t("delete")}
           </button>
         </div>
       </div>
@@ -409,6 +412,7 @@ const DeleteModal = ({ category, loading, onClose, onConfirm }) => {
 };
 
 export default function Categories() {
+  const { t, lang } = useLanguageStore();
   const {
     categories,
     isLoading,
@@ -483,7 +487,7 @@ export default function Categories() {
 
   const handleCreate = async () => {
     if (!form.category_name.trim()) {
-      setSubmitError("Category name is required");
+      setSubmitError(lang === "bn" ? "ক্যাটাগরির নাম প্রয়োজন" : "Category name is required");
       return;
     }
 
@@ -496,14 +500,14 @@ export default function Categories() {
       closeModal();
     } catch {
       setSubmitError(
-        useCategoryStore.getState().error || "Failed to create category",
+        useCategoryStore.getState().error || (lang === "bn" ? "ক্যাটাগরি তৈরি করতে ব্যর্থ" : "Failed to create category"),
       );
     }
   };
 
   const handleUpdate = async () => {
     if (!form.category_name.trim()) {
-      setSubmitError("Category name is required");
+      setSubmitError(lang === "bn" ? "ক্যাটাগরির নাম প্রয়োজন" : "Category name is required");
       return;
     }
 
@@ -516,7 +520,7 @@ export default function Categories() {
       closeModal();
     } catch {
       setSubmitError(
-        useCategoryStore.getState().error || "Failed to update category",
+        useCategoryStore.getState().error || (lang === "bn" ? "ক্যাটাগরি আপডেট করতে ব্যর্থ" : "Failed to update category"),
       );
     }
   };
@@ -547,21 +551,21 @@ export default function Categories() {
       >
         {[
           {
-            label: "Total Categories",
+            label: t("totalCategories"),
             value: totalCount,
-            sub: "All categories",
+            sub: t("allCategories"),
             color: T.accent,
           },
           {
-            label: "Active",
+            label: t("active"),
             value: activeCount,
-            sub: "Currently visible",
+            sub: t("currentlyVisible"),
             color: T.green,
           },
           {
-            label: "Inactive",
+            label: t("inactive"),
             value: inactiveCount,
-            sub: "Soft deleted / hidden",
+            sub: t("softDeletedHidden"),
             color: T.red,
           },
         ].map((item) => (
@@ -637,7 +641,7 @@ export default function Categories() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search category..."
+            placeholder={t("searchCategory")}
             style={{
               flex: 1,
               border: "none",
@@ -651,9 +655,9 @@ export default function Categories() {
 
         <div style={{ display: "flex", gap: 6 }}>
           {[
-            ["all", "All"],
-            ["active", "Active"],
-            ["inactive", "Inactive"],
+            ["all", t("all")],
+            ["active", t("active")],
+            ["inactive", t("inactive")],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -681,7 +685,7 @@ export default function Categories() {
         </div>
 
         <Btn onClick={openCreate}>
-          <Ic.Plus /> New Category
+          <Ic.Plus /> {t("newCategory")}
         </Btn>
       </div>
 
@@ -711,7 +715,7 @@ export default function Categories() {
             borderBottom: `1px solid ${T.border}`,
           }}
         >
-          {["Category", "Description", "Status", "Actions"].map((h) => (
+          {[t("category"), t("description"), t("status"), t("action")].map((h) => (
             <div
               key={h}
               style={{
@@ -736,7 +740,7 @@ export default function Categories() {
               fontWeight: 700,
             }}
           >
-            Loading categories...
+            {t("loading")}...
           </div>
         ) : filtered.length === 0 ? (
           <div
@@ -754,11 +758,11 @@ export default function Categories() {
                 fontWeight: 700,
               }}
             >
-              No categories found
+              {t("noCategoriesFound")}
             </p>
             <div style={{ marginTop: 14 }}>
               <Btn onClick={openCreate}>
-                <Ic.Plus /> Create Category
+                <Ic.Plus /> {t("createCategory")}
               </Btn>
             </div>
           </div>
@@ -803,7 +807,7 @@ export default function Categories() {
 
               <div>
                 <Badge color={category.is_active ? "green" : "red"} small>
-                  {category.is_active ? "ACTIVE" : "INACTIVE"}
+                  {category.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
                 </Badge>
               </div>
 
@@ -821,7 +825,7 @@ export default function Categories() {
                     display: "grid",
                     placeItems: "center",
                   }}
-                  title="Edit"
+                  title={t("edit")}
                 >
                   <Ic.Edit />
                 </button>
@@ -839,7 +843,7 @@ export default function Categories() {
                     display: "grid",
                     placeItems: "center",
                   }}
-                  title="Delete"
+                  title={t("delete")}
                 >
                   <Ic.Trash />
                 </button>

@@ -5,6 +5,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useStockAlertStore } from "../../store/stockAlertStore";
 import { useBranchStore } from "../../store/branchStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const getLowStatus = (item) => {
   if (Number(item.quantity || 0) === 0) return "out";
@@ -12,6 +13,7 @@ const getLowStatus = (item) => {
 };
 
 export default function StockAlert() {
+  const { t } = useLanguageStore();
   const {
     lowStockAlerts,
     overStockAlerts,
@@ -74,10 +76,10 @@ export default function StockAlert() {
 
         <div>
           <h1 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-            Stock Alert
+            {t("stockAlert")}
           </h1>
           <p style={{ color: T.textSub, fontSize: 12, margin: "4px 0 0" }}>
-            Low stock, out of stock and overstock products from API
+            {t("stockAlertSubtitle")}
           </p>
         </div>
 
@@ -90,7 +92,7 @@ export default function StockAlert() {
           }
           style={{ marginLeft: "auto" }}
         >
-          Refresh
+          {t("refresh")}
         </Btn>
       </div>
 
@@ -102,10 +104,10 @@ export default function StockAlert() {
         }}
       >
         {[
-          ["Low Stock", summary.lowStockCount || 0, T.yellow, "📉"],
-          ["Out of Stock", summary.outOfStockCount || 0, T.red, "🚫"],
-          ["Overstock", summary.overStockCount || 0, T.blue, "📦"],
-          ["Showing", filteredAlerts.length, T.accent, "👁️"],
+          [t("lowStock"), summary.lowStockCount || 0, T.yellow, "📉"],
+          [t("outOfStock"), summary.outOfStockCount || 0, T.red, "🚫"],
+          [t("overstock"), summary.overStockCount || 0, T.blue, "📦"],
+          [t("showing"), filteredAlerts.length, T.accent, "👁️"],
         ].map(([label, value, color, icon]) => (
           <div
             key={label}
@@ -152,7 +154,7 @@ export default function StockAlert() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search product, SKU, store..."
+          placeholder={t("searchProductSkuStore")}
           style={{ ...inputStyle(), flex: 1, minWidth: 240 }}
         />
 
@@ -161,8 +163,8 @@ export default function StockAlert() {
           onChange={(e) => setTypeFilter(e.target.value)}
           style={inputStyle()}
         >
-          <option value="low">Low / Out Stock</option>
-          <option value="overstock">Overstock</option>
+          <option value="low">{t("lowOutStockAlert")}</option>
+          <option value="overstock">{t("overstock")}</option>
         </select>
 
         <select
@@ -170,7 +172,7 @@ export default function StockAlert() {
           onChange={(e) => handleStoreChange(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Stores</option>
+          <option value="all">{t("allStores")}</option>
           {branches.map((branch) => (
             <option key={branch.store_id} value={branch.store_id}>
               {branch.store_name}
@@ -207,23 +209,22 @@ export default function StockAlert() {
             gap: 10,
           }}
         >
-          <HeaderText>Product</HeaderText>
-          <HeaderText>Store</HeaderText>
-          <HeaderText>Qty</HeaderText>
-          <HeaderText>{typeFilter === "overstock" ? "Max" : "Min"}</HeaderText>
-          {typeFilter === "overstock" && <HeaderText>Extra</HeaderText>}
-          <HeaderText>Status</HeaderText>
+          <HeaderText>{t("product")}</HeaderText>
+          <HeaderText>{t("store")}</HeaderText>
+          <HeaderText>{t("qty")}</HeaderText>
+          <HeaderText>{typeFilter === "overstock" ? t("max") : t("min")}</HeaderText>
+          {typeFilter === "overstock" && <HeaderText>{t("extra")}</HeaderText>}
+          <HeaderText>{t("status")}</HeaderText>
         </div>
 
         {isLoading ? (
           <div style={{ padding: 34, textAlign: "center", color: T.textSub }}>
-            Loading stock alerts...
+            {t("loadingStockAlerts")}
           </div>
         ) : filteredAlerts.length === 0 ? (
           <div style={{ padding: 44, textAlign: "center", color: T.textSub }}>
             <div style={{ fontSize: 46, marginBottom: 8 }}>🎉</div>
-            No {typeFilter === "overstock" ? "overstock" : "low stock"} alerts
-            found
+            {typeFilter === "overstock" ? t("noOverstockAlerts") : t("noLowStockAlerts")}
           </div>
         ) : (
           filteredAlerts.map((item) => {
@@ -254,7 +255,7 @@ export default function StockAlert() {
                 </div>
 
                 <div style={{ color: T.textSub }}>
-                  {item.store?.store_name || "Unknown Store"}
+                  {item.store?.store_name || t("unknownStore")}
                 </div>
 
                 <div style={{ color: T.text, fontWeight: 900 }}>
@@ -273,10 +274,10 @@ export default function StockAlert() {
 
                 <div>
                   {isOver ? (
-                    <Badge color="blue">OVERSTOCK</Badge>
+                    <Badge color="blue">{t("overstock").toUpperCase()}</Badge>
                   ) : (
                     <Badge color={status === "out" ? "red" : "yellow"}>
-                      {status === "out" ? "OUT" : "LOW"}
+                      {status === "out" ? t("out").toUpperCase() : t("low").toUpperCase()}
                     </Badge>
                   )}
                 </div>

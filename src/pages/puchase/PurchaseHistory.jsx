@@ -4,10 +4,12 @@ import { Badge } from "../../components/Badge";
 import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { usePurchaseStore } from "../../store/purchaseStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function PurchaseHistory() {
+  const { t } = useLanguageStore();
   const {
     purchases,
     currentPurchase,
@@ -61,10 +63,10 @@ export default function PurchaseHistory() {
         }}
       >
         {[
-          ["Total Purchase", money(total), T.accent, "📦"],
-          ["Paid", money(paid), T.green, "✅"],
-          ["Due", money(due), T.red, "⚠️"],
-          ["Records", filtered.length, T.blue, "🧾"],
+          [t("totalPurchase"), money(total), T.accent, "📦"],
+          [t("paid"), money(paid), T.green, "✅"],
+          [t("due"), money(due), T.red, "⚠️"],
+          [t("records"), filtered.length, T.blue, "🧾"],
         ].map(([label, value, color, icon]) => (
           <div
             key={label}
@@ -106,7 +108,7 @@ export default function PurchaseHistory() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search PO, supplier, store..."
+          placeholder={t("searchPoSupplierStore")}
           style={{ ...inputStyle(), flex: 1, minWidth: 240 }}
         />
 
@@ -115,7 +117,7 @@ export default function PurchaseHistory() {
           onChange={(e) => setStatusF(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Status</option>
+          <option value="all">{t("allStatus")}</option>
           {[
             "pending",
             "partial",
@@ -125,13 +127,13 @@ export default function PurchaseHistory() {
             "cancelled",
           ].map((s) => (
             <option key={s} value={s}>
-              {s}
+              {t(s)}
             </option>
           ))}
         </select>
 
         <Btn variant="ghost" onClick={() => fetchPurchases()}>
-          Refresh
+          {t("refresh")}
         </Btn>
       </div>
 
@@ -153,16 +155,16 @@ export default function PurchaseHistory() {
           <thead style={{ background: T.bg2 }}>
             <tr>
               {[
-                "PO Number",
-                "Supplier",
-                "Store",
-                "Items",
-                "Total",
-                "Paid",
-                "Due",
-                "Status",
-                "Date",
-                "Action",
+                t("poNumber"),
+                t("supplier"),
+                t("store"),
+                t("items"),
+                t("total"),
+                t("paid"),
+                t("due"),
+                t("status"),
+                t("date"),
+                t("action"),
               ].map((h) => (
                 <th key={h} style={th()}>
                   {h.toUpperCase()}
@@ -178,7 +180,7 @@ export default function PurchaseHistory() {
                   colSpan={10}
                   style={{ padding: 30, textAlign: "center", color: T.textSub }}
                 >
-                  Loading purchases...
+                  {t("loadingPurchases")}
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
@@ -187,7 +189,7 @@ export default function PurchaseHistory() {
                   colSpan={10}
                   style={{ padding: 40, textAlign: "center", color: T.textSub }}
                 >
-                  No purchase history found
+                  {t("noPurchaseHistoryFound")}
                 </td>
               </tr>
             ) : (
@@ -201,7 +203,7 @@ export default function PurchaseHistory() {
                   <td style={td()}>{p.store?.store_name || "—"}</td>
                   <td style={td()}>
                     <Badge color="blue" small>
-                      {p.items?.length || 0} items
+                      {p.items?.length || 0} {t("items")}
                     </Badge>
                   </td>
                   <td style={tdStrong(T.text)}>{money(p.total_amount)}</td>
@@ -226,7 +228,7 @@ export default function PurchaseHistory() {
                       }
                       small
                     >
-                      {p.payment_status?.toUpperCase()}
+                      {t(p.payment_status || "pending")?.toUpperCase()}
                     </Badge>
                   </td>
                   <td style={td()}>
@@ -260,6 +262,7 @@ export default function PurchaseHistory() {
 }
 
 function PurchaseModal({ purchase, onClose }) {
+  const { t } = useLanguageStore();
   return (
     <div
       style={{
@@ -290,8 +293,8 @@ function PurchaseModal({ purchase, onClose }) {
               {purchase.po_number}
             </h2>
             <p style={{ color: T.textSub, margin: "5px 0 0", fontSize: 12 }}>
-              {purchase.supplier?.supplier_name || "Supplier"} •{" "}
-              {purchase.store?.store_name || "Store"}
+              {purchase.supplier?.supplier_name || t("supplier")} •{" "}
+              {purchase.store?.store_name || t("store")}
             </p>
           </div>
 
@@ -312,19 +315,19 @@ function PurchaseModal({ purchase, onClose }) {
           }}
         >
           <Info
-            label="Total"
+            label={t("total")}
             value={money(purchase.total_amount)}
             color={T.green}
           />
           <Info
-            label="Paid"
+            label={t("paid")}
             value={money(purchase.paid_amount)}
             color={T.blue}
           />
-          <Info label="Due" value={money(purchase.due_amount)} color={T.red} />
+          <Info label={t("due")} value={money(purchase.due_amount)} color={T.red} />
           <Info
-            label="Status"
-            value={purchase.payment_status}
+            label={t("status")}
+            value={t(purchase.payment_status || "pending")}
             color={T.accent}
           />
         </div>
@@ -337,12 +340,15 @@ function PurchaseModal({ purchase, onClose }) {
               gap: 10,
               padding: 12,
               background: T.bg2,
+              fontSize: 11,
+              fontWeight: 900,
+              color: T.textMut,
             }}
           >
-            <b>Product</b>
-            <b>Unit Cost</b>
-            <b>Qty</b>
-            <b>Total</b>
+            <span>{t("product").toUpperCase()}</span>
+            <span>{t("unitCost").toUpperCase()}</span>
+            <span>{t("qty").toUpperCase()}</span>
+            <span>{t("total").toUpperCase()}</span>
           </div>
 
           {purchase.items?.map((item) => (
@@ -358,7 +364,7 @@ function PurchaseModal({ purchase, onClose }) {
             >
               <div>
                 <p style={{ color: T.text, margin: 0, fontWeight: 800 }}>
-                  {item.product?.product_name || "Product"}
+                  {item.product?.product_name || t("product")}
                 </p>
                 <p
                   style={{ color: T.textMut, margin: "3px 0 0", fontSize: 10 }}
@@ -379,7 +385,7 @@ function PurchaseModal({ purchase, onClose }) {
 
         {purchase.notes && (
           <div style={{ ...card(), padding: 14, marginTop: 16 }}>
-            <p style={{ color: T.textSub, margin: 0, fontSize: 11 }}>NOTES</p>
+            <p style={{ color: T.textSub, margin: 0, fontSize: 11 }}>{t("notes").toUpperCase()}</p>
             <p style={{ color: T.text, marginBottom: 0 }}>{purchase.notes}</p>
           </div>
         )}
@@ -388,7 +394,7 @@ function PurchaseModal({ purchase, onClose }) {
           onClick={onClose}
           style={{ marginTop: 16, width: "100%", justifyContent: "center" }}
         >
-          Close
+          {t("close")}
         </Btn>
       </div>
     </div>

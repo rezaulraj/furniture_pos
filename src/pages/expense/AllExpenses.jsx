@@ -5,10 +5,12 @@ import { Btn } from "../../components/Button";
 import { Input, Select } from "../../components/Input";
 import { Ic } from "../../components/Icons";
 import { useExpenseStore } from "../../store/expenseStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function AllExpenses() {
+  const { t } = useLanguageStore();
   const {
     expenses,
     isLoading,
@@ -56,16 +58,16 @@ export default function AllExpenses() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
-        <StatCard label="Total Expenses" value={money(stats.total)} color={T.accent} />
-        <StatCard label="Pending Approval" value={stats.pending} color={T.yellow} />
-        <StatCard label="Total Paid" value={stats.paid} color={T.green} />
+        <StatCard label={t("totalExpenses")} value={money(stats.total)} color={T.accent} />
+        <StatCard label={t("pendingApproval")} value={stats.pending} color={T.yellow} />
+        <StatCard label={t("totalPaid")} value={stats.paid} color={T.green} />
       </div>
 
       <div style={{ ...card(), padding: "12px 16px", display: "flex", gap: 10, alignItems: "flex-end" }}>
         <div style={{ flex: 1 }}>
           <Input
             icon={<Ic.Search />}
-            placeholder="Search expenses..."
+            placeholder={t("searchExpenses")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -74,15 +76,15 @@ export default function AllExpenses() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           options={[
-            { value: "all", label: "All Status" },
-            { value: "pending", label: "Pending" },
-            { value: "approved", label: "Approved" },
-            { value: "paid", label: "Paid" },
-            { value: "cancelled", label: "Cancelled" },
+            { value: "all", label: t("allStatus") },
+            { value: "pending", label: t("pending") },
+            { value: "approved", label: t("approved") },
+            { value: "paid", label: t("paid") },
+            { value: "cancelled", label: t("cancelled") },
           ]}
         />
         <Btn onClick={() => (window.location.href = "/expenses/add")}>
-          <Ic.Plus /> Add Expense
+          <Ic.Plus /> {t("addExpense")}
         </Btn>
       </div>
 
@@ -92,16 +94,16 @@ export default function AllExpenses() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["Date", "Title", "Category", "Store", "Amount", "Method", "Status", "Actions"].map((h) => (
+              {[t("date"), t("title"), t("category"), t("store"), t("amount"), t("method"), t("status"), t("action")].map((h) => (
                 <th key={h} style={thStyle()}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={8} style={{ padding: 40, textAlign: "center" }}>Loading...</td></tr>
+              <tr><td colSpan={8} style={{ padding: 40, textAlign: "center" }}>{t("loading")}</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} style={{ padding: 40, textAlign: "center" }}>No expenses found</td></tr>
+              <tr><td colSpan={8} style={{ padding: 40, textAlign: "center" }}>{t("noExpensesFound")}</td></tr>
             ) : (
               filtered.map((exp) => (
                 <tr key={exp.expense_id} style={{ borderBottom: `1px solid ${T.border}` }}>
@@ -118,10 +120,10 @@ export default function AllExpenses() {
                   <td style={tdStyle()}>
                     <div style={{ display: "flex", gap: 5 }}>
                       {exp.status === "pending" && (
-                        <button onClick={() => handleStatusUpdate(exp.expense_id, "approved")} style={actionBtn(T.blue)}>Approve</button>
+                        <button onClick={() => handleStatusUpdate(exp.expense_id, "approved")} style={actionBtn(T.blue)}>{t("approve")}</button>
                       )}
                       {exp.status === "approved" && (
-                        <button onClick={() => handleStatusUpdate(exp.expense_id, "paid")} style={actionBtn(T.green)}>Mark Paid</button>
+                        <button onClick={() => handleStatusUpdate(exp.expense_id, "paid")} style={actionBtn(T.green)}>{t("markPaid")}</button>
                       )}
                     </div>
                   </td>

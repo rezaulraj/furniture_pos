@@ -4,10 +4,12 @@ import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { useSupplierStore } from "../../store/supplierStore";
 import { Input, Select } from "../../components/Input";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function SupplierProfitLossReport() {
+  const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const { suppliers, fetchSuppliers } = useSupplierStore();
   const [data, setData] = useState({ summary: {}, details: [] });
@@ -41,53 +43,53 @@ export default function SupplierProfitLossReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Supplier Profitability Analysis</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Profit margins on products sourced from specific suppliers</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("supplierProfitabilityAnalysis")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("profitMarginsProductsSourcedSuppliers")}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
         <div style={{ flex: 1 }}>
             <Select 
-                label="Supplier" 
+                label={t("supplier")} 
                 value={supplierId} 
                 onChange={e => setSupplierId(e.target.value)} 
                 options={[
-                    { value: "", label: "Select Supplier" },
+                    { value: "", label: t("selectSupplier") },
                     ...suppliers.map(s => ({ value: String(s.supplier_id), label: s.supplier_name }))
                 ]} 
             />
         </div>
-        <Input label="From" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label="To" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
       {!supplierId ? (
           <div style={{ ...card(), padding: 40, textAlign: "center", color: T.textSub }}>
-              Please select a supplier to view the report
+              {t("pleaseSelectSupplierReport")}
           </div>
       ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: 16 }}>
-                <StatCard label="Total Net Profit" value={money(data.summary?.totalProfit)} icon="📈" color={T.accent} />
+                <StatCard label={t("totalNetProfit")} value={money(data.summary?.totalProfit)} icon="📈" color={T.accent} />
             </div>
 
             <div style={{ ...card(), overflow: "hidden" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ background: T.bg2 }}>
                     <tr>
-                    {["Product Name", "Qty Sold", "Revenue", "Cost", "Profit"].map(h => (
+                    {[t("productName"), t("qtySold"), t("revenue"), t("cost"), t("profit")].map(h => (
                         <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
                     ))}
                     </tr>
                 </thead>
                 <tbody>
                     {isLoading ? (
-                    <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+                    <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
                     ) : !data.details || data.details.length === 0 ? (
-                    <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No sales found for products from this supplier</td></tr>
+                    <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noSalesFoundSupplierProducts")}</td></tr>
                     ) : (
                     data.details.map((item, i) => (
                         <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>

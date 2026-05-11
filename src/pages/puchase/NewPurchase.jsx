@@ -6,6 +6,7 @@ import { useProductStore } from "../../store/productStore";
 import { useSupplierStore } from "../../store/supplierStore";
 import { useBranchStore } from "../../store/branchStore";
 import { usePurchaseStore } from "../../store/purchaseStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const EMPTY_ITEM = {
   product_id: "",
@@ -35,6 +36,7 @@ const EMPTY_FORM = {
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function NewPurchase() {
+  const { t } = useLanguageStore();
   const { products, fetchProducts } = useProductStore();
   const { suppliers, fetchSuppliers } = useSupplierStore();
   const { branches, fetchBranches } = useBranchStore();
@@ -152,17 +154,17 @@ export default function NewPurchase() {
   const toISO = (v) => (v ? new Date(v).toISOString() : null);
 
   const validate = () => {
-    if (!form.store_id) return "Store is required";
-    if (!form.supplier_id) return "Supplier is required";
+    if (!form.store_id) return t("storeRequired");
+    if (!form.supplier_id) return t("supplierRequired");
 
     for (const item of form.items) {
-      if (!item.product_id) return "Every item needs a product";
+      if (!item.product_id) return t("everyItemNeedsProduct");
       if (Number(item.quantity_ordered) <= 0)
-        return "Quantity ordered must be greater than 0";
+        return t("qtyOrderedPositive");
       if (Number(item.quantity_received) < 0)
-        return "Quantity received cannot be negative";
+        return t("qtyReceivedNegative");
       if (item.unit_cost === "" || Number(item.unit_cost) < 0)
-        return "Unit cost is required";
+        return t("unitCostRequired");
     }
 
     return "";
@@ -213,13 +215,13 @@ export default function NewPurchase() {
       <div style={{ minHeight: 460, display: "grid", placeItems: "center" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 60 }}>✅</div>
-          <h2 style={{ color: T.text, fontWeight: 900 }}>Purchase Created</h2>
+          <h2 style={{ color: T.text, fontWeight: 900 }}>{t("purchaseCreated")}</h2>
           <p style={{ color: T.textSub }}>
-            PO Number:{" "}
+            {t("poNumber")}:{" "}
             <strong style={{ color: T.accent }}>{saved.po_number}</strong>
           </p>
           <Btn onClick={() => setSaved(null)}>
-            <Ic.Plus /> Create Another
+            <Ic.Plus /> {t("createAnother")}
           </Btn>
         </div>
       </div>
@@ -229,7 +231,7 @@ export default function NewPurchase() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 16 }}>
       <div style={{ ...card(), padding: 20 }}>
-        <h2 style={{ color: T.text, marginTop: 0 }}>New Purchase</h2>
+        <h2 style={{ color: T.text, marginTop: 0 }}>{t("newPurchase")}</h2>
 
         {(formError || error) && (
           <div style={{ color: T.red, marginBottom: 12, fontWeight: 800 }}>
@@ -240,13 +242,13 @@ export default function NewPurchase() {
         <div
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
         >
-          <Field label="Store *">
+          <Field label={`${t("store")} *`}>
             <select
               value={form.store_id}
               onChange={setField("store_id")}
               style={inputStyle()}
             >
-              <option value="">Select store</option>
+              <option value="">{t("selectStore")}</option>
               {branches.map((b) => (
                 <option key={b.store_id} value={b.store_id}>
                   {b.store_name}
@@ -255,13 +257,13 @@ export default function NewPurchase() {
             </select>
           </Field>
 
-          <Field label="Supplier *">
+          <Field label={`${t("supplier")} *`}>
             <select
               value={form.supplier_id}
               onChange={setField("supplier_id")}
               style={inputStyle()}
             >
-              <option value="">Select supplier</option>
+              <option value="">{t("selectSupplier")}</option>
               {suppliers.map((s) => (
                 <option key={s.supplier_id} value={s.supplier_id}>
                   {s.supplier_name}
@@ -270,7 +272,7 @@ export default function NewPurchase() {
             </select>
           </Field>
 
-          <Field label="Expected Delivery">
+          <Field label={t("expectedDelivery")}>
             <input
               type="datetime-local"
               value={form.expected_delivery}
@@ -279,7 +281,7 @@ export default function NewPurchase() {
             />
           </Field>
 
-          <Field label="Received Date">
+          <Field label={t("receivedDate")}>
             <input
               type="datetime-local"
               value={form.received_date}
@@ -289,7 +291,7 @@ export default function NewPurchase() {
           </Field>
         </div>
 
-        <h3 style={{ color: T.text, marginTop: 22 }}>Items</h3>
+        <h3 style={{ color: T.text, marginTop: 22 }}>{t("items")}</h3>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {form.items.map((item, index) => (
@@ -304,13 +306,13 @@ export default function NewPurchase() {
                   gap: 10,
                 }}
               >
-                <Field label="Product *">
+                <Field label={`${t("product")} *`}>
                   <select
                     value={item.product_id}
                     onChange={(e) => handleProductChange(index, e.target.value)}
                     style={inputStyle()}
                   >
-                    <option value="">Select product</option>
+                    <option value="">{t("selectProduct")}</option>
                     {products.map((p) => (
                       <option key={p.product_id} value={p.product_id}>
                         {p.product_name} ({p.sku})
@@ -319,7 +321,7 @@ export default function NewPurchase() {
                   </select>
                 </Field>
 
-                <Field label="Ordered *">
+                <Field label={`${t("ordered")} *`}>
                   <input
                     type="number"
                     value={item.quantity_ordered}
@@ -330,7 +332,7 @@ export default function NewPurchase() {
                   />
                 </Field>
 
-                <Field label="Received">
+                <Field label={t("received")}>
                   <input
                     type="number"
                     value={item.quantity_received}
@@ -341,7 +343,7 @@ export default function NewPurchase() {
                   />
                 </Field>
 
-                <Field label="Unit Cost *">
+                <Field label={`${t("unitCost")} *`}>
                   <input
                     type="number"
                     value={item.unit_cost}
@@ -365,7 +367,7 @@ export default function NewPurchase() {
                   gap: 10,
                 }}
               >
-                <Field label="Item Discount">
+                <Field label={t("itemDiscount")}>
                   <input
                     type="number"
                     value={item.discount_amount}
@@ -377,11 +379,11 @@ export default function NewPurchase() {
                 </Field>
 
                 <InfoBox
-                  label="Subtotal"
+                  label={t("subTotal")}
                   value={money(detailedItems[index].subtotal)}
                 />
                 <InfoBox
-                  label="Final Unit Cost"
+                  label={t("finalUnitCost")}
                   value={money(detailedItems[index].final_unit_cost)}
                 />
               </div>
@@ -390,26 +392,26 @@ export default function NewPurchase() {
         </div>
 
         <Btn variant="ghost" onClick={addItem} style={{ marginTop: 12 }}>
-          <Ic.Plus /> Add Item
+          <Ic.Plus /> {t("addItem")}
         </Btn>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ ...card(), padding: 18 }}>
-          <h3 style={{ color: T.text, marginTop: 0 }}>Payment</h3>
+          <h3 style={{ color: T.text, marginTop: 0 }}>{t("payment")}</h3>
 
-          <Field label="Discount Type">
+          <Field label={t("discountType")}>
             <select
               value={form.discount_type}
               onChange={setField("discount_type")}
               style={inputStyle()}
             >
-              <option value="fixed">Fixed</option>
-              <option value="percentage">Percentage</option>
+              <option value="fixed">{t("fixed")}</option>
+              <option value="percentage">{t("percentage")}</option>
             </select>
           </Field>
 
-          <Field label="Discount Value">
+          <Field label={t("discountValue")}>
             <input
               type="number"
               value={form.discount_value}
@@ -418,7 +420,7 @@ export default function NewPurchase() {
             />
           </Field>
 
-          <Field label="Tax Amount">
+          <Field label={t("taxAmount")}>
             <input
               type="number"
               value={form.tax_amount}
@@ -427,7 +429,7 @@ export default function NewPurchase() {
             />
           </Field>
 
-          <Field label="Payment Status">
+          <Field label={t("paymentStatus")}>
             <select
               value={form.payment_status}
               onChange={setField("payment_status")}
@@ -442,13 +444,13 @@ export default function NewPurchase() {
                 "cancelled",
               ].map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {t(s)}
                 </option>
               ))}
             </select>
           </Field>
 
-          <Field label="Paid Amount">
+          <Field label={t("paidAmount")}>
             <input
               type="number"
               value={form.paid_amount}
@@ -457,18 +459,18 @@ export default function NewPurchase() {
             />
           </Field>
 
-          <Field label="Payment Method">
+          <Field label={t("paymentMethod")}>
             <select
               value={form.payment_method}
               onChange={setField("payment_method")}
               style={inputStyle()}
             >
-              <option value="cash">Cash</option>
-              <option value="bank">Bank</option>
+              <option value="cash">{t("cash")}</option>
+              <option value="bank">{t("bank")}</option>
             </select>
           </Field>
 
-          <Field label="Payment Terms">
+          <Field label={t("paymentTerms")}>
             <input
               value={form.payment_terms}
               onChange={setField("payment_terms")}
@@ -476,7 +478,7 @@ export default function NewPurchase() {
             />
           </Field>
 
-          <Field label="Notes">
+          <Field label={t("notes")}>
             <textarea
               rows={3}
               value={form.notes}
@@ -487,14 +489,14 @@ export default function NewPurchase() {
         </div>
 
         <div style={{ ...card(), padding: 18 }}>
-          <h3 style={{ color: T.text, marginTop: 0 }}>Summary</h3>
-          <Total label="Subtotal" value={money(totals.subtotal)} />
-          <Total label="Discount" value={`- ${money(totals.discountAmount)}`} />
-          <Total label="Tax" value={money(totals.taxAmount)} />
+          <h3 style={{ color: T.text, marginTop: 0 }}>{t("summary")}</h3>
+          <Total label={t("subTotal")} value={money(totals.subtotal)} />
+          <Total label={t("discount")} value={`- ${money(totals.discountAmount)}`} />
+          <Total label={t("tax")} value={money(totals.taxAmount)} />
           <hr style={{ borderColor: "var(--border)" }} />
-          <Total label="Total" value={money(totals.totalAmount)} strong />
-          <Total label="Paid" value={money(totals.paidAmount)} />
-          <Total label="Due" value={money(totals.dueAmount)} />
+          <Total label={t("total")} value={money(totals.totalAmount)} strong />
+          <Total label={t("paid")} value={money(totals.paidAmount)} />
+          <Total label={t("due")} value={money(totals.dueAmount)} />
 
           <button
             onClick={handleSubmit}
@@ -511,7 +513,7 @@ export default function NewPurchase() {
               cursor: isSubmitting ? "not-allowed" : "pointer",
             }}
           >
-            {isSubmitting ? "Creating..." : "Create Purchase"}
+            {isSubmitting ? t("creating") : t("createPurchase")}
           </button>
         </div>
       </div>

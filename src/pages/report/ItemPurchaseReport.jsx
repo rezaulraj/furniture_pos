@@ -3,10 +3,12 @@ import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function ItemPurchaseReport() {
+  const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState([]);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
@@ -29,15 +31,15 @@ export default function ItemPurchaseReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Item-wise Purchase Report</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Analyze stock purchases by product</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("itemWisePurchaseReport")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("analyzeStockPurchasesProduct")}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
-        <Input label="From" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label="To" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
@@ -45,16 +47,16 @@ export default function ItemPurchaseReport() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["Product Name", "SKU", "Qty Purchased", "Total Cost"].map(h => (
+              {[t("productName"), t("sku"), t("qtyPurchased"), t("totalCost")].map(h => (
                 <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-               <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+               <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
             ) : data.length === 0 ? (
-               <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No records found</td></tr>
+               <tr><td colSpan={4} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
             ) : (
               data.map((item, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>

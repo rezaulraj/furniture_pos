@@ -4,10 +4,12 @@ import { Ic } from "../../components/Icons";
 import { useSaleStore } from "../../store/saleStore";
 import { Input, Select } from "../../components/Input";
 import { Badge, StatusBadge } from "../../components/Badge";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function SalesReport() {
+  const { t } = useLanguageStore();
   const { sales, fetchSales, isLoading } = useSaleStore();
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
@@ -49,25 +51,25 @@ export default function SalesReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Sales Report</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Analyze your sales performance</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("salesReport")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("analyzeSalesPerformance")}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label="Total Revenue" value={money(stats.total)} icon="💰" color={T.green} />
-        <StatCard label="Total Received" value={money(stats.paid)} icon="📥" color={T.blue} />
-        <StatCard label="Total Outstanding" value={money(stats.due)} icon="⏳" color={T.red} />
-        <StatCard label="Total Invoices" value={stats.count} icon="🧾" color={T.accent} />
+        <StatCard label={t("totalRevenue")} value={money(stats.total)} icon="💰" color={T.green} />
+        <StatCard label={t("totalReceived")} value={money(stats.paid)} icon="📥" color={T.blue} />
+        <StatCard label={t("totalOutstanding")} value={money(stats.due)} icon="⏳" color={T.red} />
+        <StatCard label={t("totalInvoices")} value={stats.count} icon="🧾" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
         <div style={{ flex: 1 }}>
-          <Select label="Store" value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: "All Stores" }, ...stores]} />
+          <Select label={t("store")} value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: t("allStores") }, ...stores]} />
         </div>
-        <Input label="From" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label="To" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         <Btn onClick={() => fetchSales()} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
@@ -75,22 +77,22 @@ export default function SalesReport() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["Invoice", "Date", "Customer", "Store", "Amount", "Paid", "Due", "Status"].map(h => (
+              {[t("invoice"), t("date"), t("customer"), t("store"), t("amount"), t("paid"), t("due"), t("status")].map(h => (
                 <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
             ) : filtered.length === 0 ? (
-               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No records found for this period</td></tr>
+               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFoundPeriod")}</td></tr>
             ) : (
               filtered.map(s => (
                 <tr key={s.sale_id} style={{ borderBottom: `1px solid ${T.border}` }}>
                   <td style={{ padding: "12px 15px", color: T.accent, fontWeight: 700 }}>{s.invoice_number}</td>
                   <td style={{ padding: "12px 15px", color: T.textSub, fontSize: 12 }}>{new Date(s.sale_date).toLocaleDateString()}</td>
-                  <td style={{ padding: "12px 15px", color: T.text }}>{s.customer?.full_name || "Walk-in"}</td>
+                  <td style={{ padding: "12px 15px", color: T.text }}>{s.customer?.full_name || t("walkIn")}</td>
                   <td style={{ padding: "12px 15px", color: T.textSub }}>{s.store?.store_name}</td>
                   <td style={{ padding: "12px 15px", color: T.text, fontWeight: 700 }}>{money(s.total_amount)}</td>
                   <td style={{ padding: "12px 15px", color: T.green, fontWeight: 700 }}>{money(s.paid_amount)}</td>

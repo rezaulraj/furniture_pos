@@ -6,6 +6,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useUserStore } from "../../store/userStore";
 import { useBranchStore } from "../../store/branchStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const roleColor = (role) =>
   role === "admin" ? "red" : role === "manager" ? "blue" : "green";
@@ -22,6 +23,7 @@ const inputStyle = () => ({
 });
 
 export default function AllUser() {
+  const { t } = useLanguageStore();
   const navigate = useNavigate();
   const {
     users,
@@ -104,10 +106,10 @@ export default function AllUser() {
 
         <div>
           <h1 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-            All Users
+            {t("allUsers")}
           </h1>
           <p style={{ color: T.textSub, margin: "4px 0 0", fontSize: 12 }}>
-            Manage admin, manager and seller accounts
+            {t("manageAdminManagerSellerAccounts")}
           </p>
         </div>
 
@@ -115,7 +117,7 @@ export default function AllUser() {
           onClick={() => navigate("/users/add")}
           style={{ marginLeft: "auto" }}
         >
-          <Ic.Plus /> Add User
+          <Ic.Plus /> {t("addUser")}
         </Btn>
       </div>
 
@@ -127,10 +129,10 @@ export default function AllUser() {
         }}
       >
         {[
-          ["Total Users", users.length, T.accent, "👥"],
-          ["Active", activeCount, T.green, "✅"],
-          ["Inactive", inactiveCount, T.red, "🚫"],
-          ["Admins", adminCount, T.blue, "🛡️"],
+          [t("totalUsers"), users.length, T.accent, "👥"],
+          [t("active"), activeCount, T.green, "✅"],
+          [t("inactive"), inactiveCount, T.red, "🚫"],
+          [t("admins"), adminCount, T.blue, "🛡️"],
         ].map(([label, value, color, icon]) => (
           <div
             key={label}
@@ -172,7 +174,7 @@ export default function AllUser() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, username, email, phone..."
+          placeholder={t("searchNameUsernameEmailPhone")}
           style={{ ...inputStyle(), flex: 1, minWidth: 260 }}
         />
 
@@ -181,10 +183,10 @@ export default function AllUser() {
           onChange={(e) => setRoleF(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="manager">Manager</option>
-          <option value="seller">Seller</option>
+          <option value="all">{t("allRoles")}</option>
+          <option value="admin">{t("admin")}</option>
+          <option value="manager">{t("manager")}</option>
+          <option value="seller">{t("seller")}</option>
         </select>
 
         <select
@@ -192,7 +194,7 @@ export default function AllUser() {
           onChange={(e) => setStoreF(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Stores</option>
+          <option value="all">{t("allStores")}</option>
           {branches.map((b) => (
             <option key={b.store_id} value={b.store_id}>
               {b.store_name}
@@ -205,9 +207,9 @@ export default function AllUser() {
           onChange={(e) => setStatusF(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="all">{t("allStatus")}</option>
+          <option value="active">{t("active")}</option>
+          <option value="inactive">{t("inactive")}</option>
         </select>
       </div>
 
@@ -236,7 +238,7 @@ export default function AllUser() {
             borderBottom: "1px solid var(--border)",
           }}
         >
-          {["User", "Role", "Contact", "Store", "Status", "Action"].map((h) => (
+          {[t("user"), t("role"), t("contact"), t("store"), t("status"), t("action")].map((h) => (
             <b key={h} style={{ color: T.textMut, fontSize: 10 }}>
               {h.toUpperCase()}
             </b>
@@ -245,12 +247,12 @@ export default function AllUser() {
 
         {isLoading ? (
           <div style={{ padding: 34, textAlign: "center", color: T.textSub }}>
-            Loading users...
+            {t("loadingUsers")}...
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: 44, textAlign: "center", color: T.textSub }}>
             <div style={{ fontSize: 46 }}>👥</div>
-            No user found
+            {t("noUserFound")}
           </div>
         ) : (
           filtered.map((user) => (
@@ -300,32 +302,33 @@ export default function AllUser() {
               </div>
 
               <Badge color={roleColor(user.role?.role_name)} small>
-                {user.role?.role_name?.toUpperCase() || "NO ROLE"}
+                {t(user.role?.role_name || "noRole").toUpperCase()}
               </Badge>
 
               <div>
                 <p style={{ color: T.textSub, margin: 0, fontSize: 12 }}>
-                  {user.email || "No email"}
+                  {user.email || t("noEmail")}
                 </p>
                 <p
                   style={{ color: T.textMut, margin: "3px 0 0", fontSize: 11 }}
                 >
-                  {user.phone || "No phone"}
+                  {user.phone || t("noPhone")}
                 </p>
               </div>
 
               <div style={{ color: T.textSub, fontSize: 12 }}>
-                {user.store?.store_name || "No Store"}
+                {user.store?.store_name || t("noStore")}
               </div>
 
               <Badge color={user.is_active ? "green" : "red"} small>
-                {user.is_active ? "ACTIVE" : "INACTIVE"}
+                {user.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
               </Badge>
 
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 <button
                   onClick={() => navigate(`/users/edit/${user.users_id}`)}
                   style={iconBtn(T.blue)}
+                  title={t("edit")}
                 >
                   <Ic.Edit />
                 </button>
@@ -341,6 +344,7 @@ export default function AllUser() {
                 <button
                   onClick={() => setDeleteTarget(user)}
                   style={iconBtn(T.red, "rgba(248,113,113,.1)")}
+                  title={t("delete")}
                 >
                   <Ic.Trash />
                 </button>
@@ -365,10 +369,9 @@ export default function AllUser() {
             style={{ ...card(), width: 420, padding: 24, textAlign: "center" }}
           >
             <div style={{ fontSize: 48 }}>🗑️</div>
-            <h3 style={{ color: T.text, marginBottom: 6 }}>Delete User?</h3>
+            <h3 style={{ color: T.text, marginBottom: 6 }}>{t("deleteUserConfirmTitle")}</h3>
             <p style={{ color: T.textSub }}>
-              {deleteTarget.full_name} will be deleted. If user has
-              sales/purchases, backend may block deletion.
+              {deleteTarget.full_name} {t("deleteUserConfirmDesc")}
             </p>
 
             <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
@@ -377,7 +380,7 @@ export default function AllUser() {
                 onClick={() => setDeleteTarget(null)}
                 style={{ flex: 1, justifyContent: "center" }}
               >
-                Cancel
+                {t("cancel")}
               </Btn>
               <button
                 onClick={handleDelete}
@@ -392,7 +395,7 @@ export default function AllUser() {
                   cursor: "pointer",
                 }}
               >
-                {isDeleting ? "Deleting..." : "Delete"}
+                {isDeleting ? t("deleting") + "..." : t("delete")}
               </button>
             </div>
           </div>
@@ -416,3 +419,5 @@ function iconBtn(color, bg = "rgba(96,165,250,.1)") {
     fontWeight: 900,
   };
 }
+
+

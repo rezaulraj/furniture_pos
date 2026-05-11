@@ -3,10 +3,12 @@ import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function CashFlowReport() {
+  const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, details: {} });
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
@@ -31,47 +33,47 @@ export default function CashFlowReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Cash Flow Analysis</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Monitor cash inflow and outflow</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("cashFlowAnalysis")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("monitorCashInflowOutflow")}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-        <StatCard label="Total Cash In" value={money(stats.totalCashIn)} icon="📥" color={T.green} />
-        <StatCard label="Total Cash Out" value={money(stats.totalCashOut)} icon="📤" color={T.red} />
-        <StatCard label="Net Cash Flow" value={money(stats.netCashFlow)} icon="⚖️" color={T.accent} />
+        <StatCard label={t("totalCashIn")} value={money(stats.totalCashIn)} icon="📥" color={T.green} />
+        <StatCard label={t("totalCashOut")} value={money(stats.totalCashOut)} icon="📤" color={T.red} />
+        <StatCard label={t("netCashFlow")} value={money(stats.netCashFlow)} icon="⚖️" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
-        <Input label="From" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label="To" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <div style={{ ...card(), padding: 20 }}>
-            <h3 style={{ color: T.text, marginTop: 0 }}>Inflow Details</h3>
+            <h3 style={{ color: T.text, marginTop: 0 }}>{t("inflowDetails")}</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: T.textSub }}>Sale Payments</span>
+                    <span style={{ color: T.textSub }}>{t("salePayments")}</span>
                     <span style={{ color: T.text, fontWeight: 700 }}>{money(data.details?.salePayments?.reduce((a, b) => a + Number(b.amount), 0))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: T.textSub }}>Installment Payments</span>
+                    <span style={{ color: T.textSub }}>{t("installmentPayments")}</span>
                     <span style={{ color: T.text, fontWeight: 700 }}>{money(data.details?.installmentPayments?.reduce((a, b) => a + Number(b.amount), 0))}</span>
                 </div>
             </div>
         </div>
         <div style={{ ...card(), padding: 20 }}>
-            <h3 style={{ color: T.text, marginTop: 0 }}>Outflow Details</h3>
+            <h3 style={{ color: T.text, marginTop: 0 }}>{t("outflowDetails")}</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: T.textSub }}>Purchase Payments</span>
+                    <span style={{ color: T.textSub }}>{t("purchasePayments")}</span>
                     <span style={{ color: T.text, fontWeight: 700 }}>{money(data.details?.purchasePayments?.reduce((a, b) => a + Number(b.amount), 0))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: T.textSub }}>Expense Payments</span>
+                    <span style={{ color: T.textSub }}>{t("expensePayments")}</span>
                     <span style={{ color: T.text, fontWeight: 700 }}>{money(data.details?.expensePayments?.reduce((a, b) => a + Number(b.amount), 0))}</span>
                 </div>
             </div>

@@ -3,10 +3,12 @@ import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function RefundReport() {
+  const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, salesReturns: [], purchaseReturns: [] });
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
@@ -31,45 +33,45 @@ export default function RefundReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Refunds & Returns Report</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Track all sales and purchase returns</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("refundsReturnsReport")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("trackSalesPurchaseReturns")}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-        <StatCard label="Total Sales Refunds" value={money(stats.totalSalesRefundAmount)} icon="↩️" color={T.red} />
-        <StatCard label="Total Purchase Refunds" value={money(stats.totalPurchaseRefundAmount)} icon="↪️" color={T.green} />
+        <StatCard label={t("totalSalesRefunds")} value={money(stats.totalSalesRefundAmount)} icon="↩️" color={T.red} />
+        <StatCard label={t("totalPurchaseRefunds")} value={money(stats.totalPurchaseRefundAmount)} icon="↪️" color={T.green} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
-        <Input label="From" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label="To" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <h2 style={{ color: T.text, fontSize: 16, margin: 0 }}>Sales Returns</h2>
+        <h2 style={{ color: T.text, fontSize: 16, margin: 0 }}>{t("salesReturns")}</h2>
         <div style={{ ...card(), overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead style={{ background: T.bg2 }}>
                 <tr>
-                {["Date", "Invoice", "Customer", "Product", "Refund"].map(h => (
+                {[t("date"), t("invoice"), t("customer"), t("product"), t("refund")].map(h => (
                     <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
                 ))}
                 </tr>
             </thead>
             <tbody>
                 {isLoading ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
                 ) : data.salesReturns?.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No sales returns found</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noSalesReturnsFound")}</td></tr>
                 ) : (
                 data.salesReturns?.map((r, i) => (
                     <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>
                     <td style={{ padding: "12px 15px", color: T.textSub, fontSize: 12 }}>{new Date(r.return_date).toLocaleDateString()}</td>
                     <td style={{ padding: "12px 15px", color: T.accent, fontWeight: 700 }}>{r.sale?.invoice_number}</td>
-                    <td style={{ padding: "12px 15px", color: T.text }}>{r.sale?.customer?.full_name || "Walk-in"}</td>
+                    <td style={{ padding: "12px 15px", color: T.text }}>{r.sale?.customer?.full_name || t("walkIn")}</td>
                     <td style={{ padding: "12px 15px", color: T.textSub }}>{r.product?.product_name}</td>
                     <td style={{ padding: "12px 15px", color: T.red, fontWeight: 700 }}>{money(r.refund_amount)}</td>
                     </tr>
@@ -79,21 +81,21 @@ export default function RefundReport() {
             </table>
         </div>
 
-        <h2 style={{ color: T.text, fontSize: 16, margin: "20px 0 0" }}>Purchase Returns</h2>
+        <h2 style={{ color: T.text, fontSize: 16, margin: "20px 0 0" }}>{t("purchaseReturns")}</h2>
         <div style={{ ...card(), overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead style={{ background: T.bg2 }}>
                 <tr>
-                {["Date", "Reference", "Supplier", "Product", "Refund"].map(h => (
+                {[t("date"), t("reference"), t("supplier"), t("product"), t("refund")].map(h => (
                     <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
                 ))}
                 </tr>
             </thead>
             <tbody>
                 {isLoading ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
                 ) : data.purchaseReturns?.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No purchase returns found</td></tr>
+                <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noPurchaseReturnsFound")}</td></tr>
                 ) : (
                 data.purchaseReturns?.map((r, i) => (
                     <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>

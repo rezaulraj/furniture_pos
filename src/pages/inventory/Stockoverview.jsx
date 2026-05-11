@@ -6,6 +6,7 @@ import { Ic } from "../../components/Icons";
 import { useInventoryStore } from "../../store/inventoryStore";
 import { useProductStore } from "../../store/productStore";
 import { useBranchStore } from "../../store/branchStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const EMPTY_FORM = {
   store_id: "",
@@ -29,14 +30,8 @@ const getStockStatus = (quantity, minimum) => {
   return "healthy";
 };
 
-const statusMap = {
-  out: { label: "OUT", color: "red" },
-  low: { label: "LOW", color: "red" },
-  warning: { label: "WARNING", color: "yellow" },
-  healthy: { label: "HEALTHY", color: "green" },
-};
-
 export default function StockOverview() {
+  const { t } = useLanguageStore();
   const {
     inventory,
     isLoading,
@@ -51,6 +46,12 @@ export default function StockOverview() {
     deleteInventory,
   } = useInventoryStore();
 
+  const statusMap = {
+    out: { label: t("out").toUpperCase(), color: "red" },
+    low: { label: t("low").toUpperCase(), color: "red" },
+    warning: { label: t("warning").toUpperCase(), color: "yellow" },
+    healthy: { label: t("healthy").toUpperCase(), color: "green" },
+  };
 
   const { products, fetchProducts } = useProductStore();
   const { branches, fetchBranches } = useBranchStore();
@@ -97,7 +98,7 @@ export default function StockOverview() {
     (sum, item) => sum + Number(item.quantity || 0),
     0,
   );
-  const lowStock = inventory.filter((item) => {
+  const lowStockCount = inventory.filter((item) => {
     const s = getStockStatus(item.quantity, item.minimum_stock);
     return s === "low" || s === "out";
   }).length;
@@ -148,7 +149,6 @@ export default function StockOverview() {
     clearError();
   };
 
-
   const closeModal = () => {
     setModal(null);
     setActiveInventory(null);
@@ -158,16 +158,16 @@ export default function StockOverview() {
   };
 
   const validate = () => {
-    if (!form.store_id) return "Store is required";
-    if (!form.product_id) return "Product is required";
+    if (!form.store_id) return t("storeRequired");
+    if (!form.product_id) return t("productRequired");
     if (form.quantity !== "" && Number(form.quantity) < 0)
-      return "Quantity cannot be negative";
+      return t("qtyCannotBeNegative");
     if (form.minimum_stock !== "" && Number(form.minimum_stock) < 0)
-      return "Minimum stock cannot be negative";
+      return t("minStockNegative");
     if (form.maximum_stock !== "" && Number(form.maximum_stock) < 0)
-      return "Maximum stock cannot be negative";
+      return t("maxStockNegative");
     if (form.valuation_price !== "" && Number(form.valuation_price) <= 0)
-      return "Valuation price must be positive";
+      return t("valuationPricePositive");
     return "";
   };
 
@@ -192,7 +192,7 @@ export default function StockOverview() {
       closeModal();
     } catch {
       setFormError(
-        useInventoryStore.getState().error || "Failed to create inventory",
+        useInventoryStore.getState().error || t("failedToCreateInventory"),
       );
     }
   };
@@ -206,7 +206,7 @@ export default function StockOverview() {
       closeModal();
     } catch {
       setFormError(
-        useInventoryStore.getState().error || "Failed to update inventory",
+        useInventoryStore.getState().error || t("failedToUpdateInventory"),
       );
     }
   };
@@ -220,7 +220,7 @@ export default function StockOverview() {
 
   const handleAddStock = async () => {
     if (!form.quantity || Number(form.quantity) < 1) {
-      return setFormError("Quantity must be at least 1");
+      return setFormError(t("qtyAtLeastOne"));
     }
 
     try {
@@ -231,10 +231,9 @@ export default function StockOverview() {
       });
       closeModal();
     } catch {
-      setFormError(useInventoryStore.getState().error || "Failed to add stock");
+      setFormError(useInventoryStore.getState().error || t("failedToAddStock"));
     }
   };
-
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -246,10 +245,10 @@ export default function StockOverview() {
         }}
       >
         {[
-          ["Inventory Records", totalItems, "📦", T.accent],
-          ["Total Quantity", totalQty, "📊", T.green],
-          ["Low / Out Stock", lowStock, "⚠️", T.red],
-          ["Stock Value", money(totalValue), "💰", T.blue],
+          [t("inventoryRecords"), totalItems, "📦", T.accent],
+          [t("totalQuantity"), totalQty, "📊", T.green],
+          [t("lowOutStock"), lowStockCount, "⚠️", T.red],
+          [t("stockValue"), money(totalValue), "💰", T.blue],
         ].map(([label, value, icon, color]) => (
           <div
             key={label}
@@ -291,7 +290,7 @@ export default function StockOverview() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search product, SKU, store..."
+          placeholder={t("searchInventory")}
           style={{ ...inputStyle(), flex: 1, minWidth: 240 }}
         />
 
@@ -300,8 +299,7 @@ export default function StockOverview() {
           onChange={(e) => setStoreFilter(e.target.value)}
           style={inputStyle()}
         >
-          <option value="">All Stores</option>
-          <option value="all">All Stores</option>
+          <option value="all">{t("allStores")}</option>
           {branches.map((b) => (
             <option key={b.store_id} value={b.store_id}>
               {b.store_name}
@@ -314,15 +312,15 @@ export default function StockOverview() {
           onChange={(e) => setStatusFilter(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Status</option>
-          <option value="healthy">Healthy</option>
-          <option value="warning">Warning</option>
-          <option value="low">Low</option>
-          <option value="out">Out</option>
+          <option value="all">{t("allStatus")}</option>
+          <option value="healthy">{t("healthy")}</option>
+          <option value="warning">{t("warning")}</option>
+          <option value="low">{t("low")}</option>
+          <option value="out">{t("out")}</option>
         </select>
 
         <Btn onClick={openCreate}>
-          <Ic.Plus /> Add Inventory
+          <Ic.Plus /> {t("addInventory")}
         </Btn>
       </div>
 
@@ -350,7 +348,7 @@ export default function StockOverview() {
             borderBottom: `1px solid ${T.border}`,
           }}
         >
-          {["Product", "Store", "Qty", "Min", "Max", "Status", "Actions"].map(
+          {[t("product"), t("store"), t("qty"), t("min"), t("max"), t("status"), t("action")].map(
             (h) => (
               <div
                 key={h}
@@ -364,16 +362,16 @@ export default function StockOverview() {
 
         {isLoading ? (
           <div style={{ padding: 30, textAlign: "center", color: T.textSub }}>
-            Loading inventory...
+            {t("loading")}...
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: 44, textAlign: "center" }}>
             <div style={{ fontSize: 46 }}>📦</div>
             <p style={{ color: T.textSub, fontWeight: 700 }}>
-              No inventory found
+              {t("noInventoryFound")}
             </p>
             <Btn onClick={openCreate}>
-              <Ic.Plus /> Create Inventory
+              <Ic.Plus /> {t("createInventory")}
             </Btn>
           </div>
         ) : (
@@ -402,7 +400,7 @@ export default function StockOverview() {
                       fontSize: 13,
                     }}
                   >
-                    {item.product?.product_name || "Unknown Product"}
+                    {item.product?.product_name || t("unknownProduct")}
                   </p>
                   <p
                     style={{
@@ -418,7 +416,7 @@ export default function StockOverview() {
 
                 <div>
                   <p style={{ color: T.textSub, margin: 0, fontSize: 12 }}>
-                    {item.store?.store_name || "Unknown Store"}
+                    {item.store?.store_name || t("unknownStore")}
                   </p>
                   <p
                     style={{
@@ -427,7 +425,7 @@ export default function StockOverview() {
                       fontSize: 10,
                     }}
                   >
-                    {item.location_in_store || "No location"}
+                    {item.location_in_store || t("noLocation")}
                   </p>
                 </div>
 
@@ -451,26 +449,25 @@ export default function StockOverview() {
                   <button
                     onClick={() => openAddStock(item)}
                     style={iconButton(T.green, "rgba(34,197,94,.12)")}
-                    title="Add Stock"
+                    title={t("addStock")}
                   >
                     <Ic.Plus />
                   </button>
                   <button
                     onClick={() => openEdit(item)}
                     style={iconButton(T.accent)}
-                    title="Edit"
+                    title={t("edit")}
                   >
                     <Ic.Edit />
                   </button>
                   <button
                     onClick={() => openDelete(item)}
                     style={iconButton(T.red, "rgba(248,113,113,.1)")}
-                    title="Delete"
+                    title={t("delete")}
                   >
                     <Ic.Trash />
                   </button>
                 </div>
-
               </div>
             );
           })
@@ -512,7 +509,6 @@ export default function StockOverview() {
         />
       )}
     </div>
-
   );
 }
 
@@ -527,6 +523,7 @@ function InventoryModal({
   onClose,
   onSubmit,
 }) {
+  const { t } = useLanguageStore();
   const selectedProduct = products.find(
     (p) => Number(p.product_id) === Number(form.product_id),
   );
@@ -551,7 +548,7 @@ function InventoryModal({
     >
       <div style={{ ...card(), width: "100%", maxWidth: 760, padding: 22 }}>
         <h2 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-          {mode === "create" ? "Create Inventory" : "Edit Inventory"}
+          {mode === "create" ? t("createInventory") : t("editInventory")}
         </h2>
 
         {error && <p style={{ color: T.red, fontWeight: 700 }}>{error}</p>}
@@ -564,13 +561,13 @@ function InventoryModal({
             marginTop: 18,
           }}
         >
-          <Field label="Store *">
+          <Field label={`${t("store")} *`}>
             <select
               value={form.store_id}
               onChange={setField("store_id")}
               style={inputStyle()}
             >
-              <option value="">Select store</option>
+              <option value="">{t("selectStore")}</option>
               {branches.map((b) => (
                 <option key={b.store_id} value={b.store_id}>
                   {b.store_name}
@@ -579,13 +576,13 @@ function InventoryModal({
             </select>
           </Field>
 
-          <Field label="Product *">
+          <Field label={`${t("product")} *`}>
             <select
               value={form.product_id}
               onChange={setField("product_id")}
               style={inputStyle()}
             >
-              <option value="">Select product</option>
+              <option value="">{t("selectProduct")}</option>
               {products.map((p) => (
                 <option key={p.product_id} value={p.product_id}>
                   {p.product_name} ({p.sku})
@@ -594,7 +591,7 @@ function InventoryModal({
             </select>
           </Field>
 
-          <Field label="Quantity">
+          <Field label={t("qty")}>
             <input
               type="number"
               value={form.quantity}
@@ -603,7 +600,7 @@ function InventoryModal({
             />
           </Field>
 
-          <Field label="Minimum Stock">
+          <Field label={t("min") + " " + t("stock")}>
             <input
               type="number"
               value={form.minimum_stock}
@@ -612,7 +609,7 @@ function InventoryModal({
             />
           </Field>
 
-          <Field label="Maximum Stock">
+          <Field label={t("max") + " " + t("stock")}>
             <input
               type="number"
               value={form.maximum_stock}
@@ -621,7 +618,7 @@ function InventoryModal({
             />
           </Field>
 
-          <Field label="Valuation Price">
+          <Field label={t("valuationPrice")}>
             <input
               type="number"
               value={form.valuation_price}
@@ -632,7 +629,7 @@ function InventoryModal({
         </div>
 
         <div style={{ marginTop: 14 }}>
-          <Field label="Location In Store">
+          <Field label={t("locationInStore")}>
             <input
               value={form.location_in_store}
               onChange={setField("location_in_store")}
@@ -652,15 +649,15 @@ function InventoryModal({
               fontWeight: 800,
             }}
           >
-            FULL PREVIEW
+            {t("fullPreview").toUpperCase()}
           </p>
           <p style={{ color: T.text, margin: 0, fontWeight: 800 }}>
-            {selectedProduct?.product_name || "No Product"} →{" "}
-            {selectedStore?.store_name || "No Store"}
+            {selectedProduct?.product_name || t("noData")} →{" "}
+            {selectedStore?.store_name || t("noData")}
           </p>
           <p style={{ color: T.textSub, margin: "6px 0 0", fontSize: 12 }}>
-            SKU: {selectedProduct?.sku || "—"} • Qty: {form.quantity || 0} •
-            Min: {form.minimum_stock || 0}
+            SKU: {selectedProduct?.sku || "—"} • {t("qty")}: {form.quantity || 0} •
+            {t("min")}: {form.minimum_stock || 0}
           </p>
           <p
             style={{
@@ -670,7 +667,7 @@ function InventoryModal({
               fontWeight: 800,
             }}
           >
-            Value:{" "}
+            {t("value")}:{" "}
             {money(
               Number(form.quantity || 0) *
                 Number(
@@ -686,7 +683,7 @@ function InventoryModal({
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            Cancel
+            {t("cancel")}
           </Btn>
           <Btn
             onClick={onSubmit}
@@ -694,10 +691,10 @@ function InventoryModal({
             style={{ flex: 1, justifyContent: "center" }}
           >
             {loading
-              ? "Saving..."
+              ? t("saving")
               : mode === "create"
-                ? "Create Inventory"
-                : "Save Changes"}
+                ? t("createInventory")
+                : t("saveChanges")}
           </Btn>
         </div>
       </div>
@@ -706,6 +703,7 @@ function InventoryModal({
 }
 
 function DeleteModal({ item, loading, onClose, onConfirm }) {
+  const { t } = useLanguageStore();
   return (
     <div
       style={{
@@ -719,9 +717,9 @@ function DeleteModal({ item, loading, onClose, onConfirm }) {
     >
       <div style={{ ...card(), width: 400, padding: 24, textAlign: "center" }}>
         <div style={{ fontSize: 42 }}>🗑️</div>
-        <h3 style={{ color: T.text }}>Delete Inventory?</h3>
+        <h3 style={{ color: T.text }}>{t("deleteInventoryQuestion")}</h3>
         <p style={{ color: T.textSub }}>
-          {item.product?.product_name} from {item.store?.store_name}
+          {item.product?.product_name} {t("from")} {item.store?.store_name}
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <Btn
@@ -729,7 +727,7 @@ function DeleteModal({ item, loading, onClose, onConfirm }) {
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            Cancel
+            {t("cancel")}
           </Btn>
           <button
             onClick={onConfirm}
@@ -743,7 +741,7 @@ function DeleteModal({ item, loading, onClose, onConfirm }) {
               fontWeight: 800,
             }}
           >
-            {loading ? "Deleting..." : "Delete"}
+            {loading ? t("deleting") : t("delete")}
           </button>
         </div>
       </div>
@@ -760,6 +758,7 @@ function AddStockModal({
   onClose,
   onSubmit,
 }) {
+  const { t } = useLanguageStore();
   return (
     <div
       style={{
@@ -773,9 +772,9 @@ function AddStockModal({
       }}
     >
       <div style={{ ...card(), width: "100%", maxWidth: 420, padding: 24 }}>
-        <h2 style={{ color: T.text, margin: 0, fontWeight: 900 }}>Add Stock</h2>
+        <h2 style={{ color: T.text, margin: 0, fontWeight: 900 }}>{t("addStock")}</h2>
         <p style={{ color: T.textSub, margin: "6px 0 16px", fontSize: 13 }}>
-          Adding stock for <b>{item.product?.product_name}</b> at{" "}
+          {t("addingStockFor")} <b>{item.product?.product_name}</b> {t("at")}{" "}
           <b>{item.store?.store_name}</b>
         </p>
 
@@ -784,7 +783,7 @@ function AddStockModal({
         )}
 
         <div style={{ marginTop: 12 }}>
-          <Field label="Quantity to Add">
+          <Field label={t("quantityToAdd")}>
             <input
               type="number"
               autoFocus
@@ -793,25 +792,9 @@ function AddStockModal({
                 setForm((p) => ({ ...p, quantity: e.target.value }))
               }
               style={inputStyle()}
-              placeholder="Enter quantity"
+              placeholder={t("enterQuantity")}
             />
           </Field>
-        </div>
-
-        <div
-          style={{
-            marginTop: 16,
-            padding: 12,
-            background: T.bg2,
-            borderRadius: 10,
-          }}
-        >
-          <p style={{ color: T.textSub, margin: 0, fontSize: 11 }}>
-            Current Quantity: <b>{item.quantity}</b>
-          </p>
-          <p style={{ color: T.accent, margin: "4px 0 0", fontSize: 12 }}>
-            New Quantity: <b>{Number(item.quantity) + Number(form.quantity || 0)}</b>
-          </p>
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
@@ -820,14 +803,14 @@ function AddStockModal({
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            Cancel
+            {t("cancel")}
           </Btn>
           <Btn
             onClick={onSubmit}
             disabled={loading}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            {loading ? "Adding..." : "Add Stock"}
+            {loading ? t("saving") : t("addStock")}
           </Btn>
         </div>
       </div>
@@ -835,17 +818,16 @@ function AddStockModal({
   );
 }
 
-
 function Field({ label, children }) {
   return (
-    <div>
+    <div style={{ marginBottom: 14 }}>
       <label
         style={{
           display: "block",
-          marginBottom: 6,
           color: T.textSub,
           fontSize: 11,
           fontWeight: 800,
+          marginBottom: 6,
         }}
       >
         {label.toUpperCase()}
@@ -862,18 +844,17 @@ function inputStyle() {
     background: T.bg3,
     border: `1px solid ${T.border}`,
     borderRadius: 12,
-    padding: "12px 14px",
+    padding: "11px 12px",
     color: T.text,
-    fontSize: 14,
     outline: "none",
   };
 }
 
-function iconButton(color, bg = "rgba(172,82,8,.12)") {
+function iconButton(color, bg = "rgba(96,165,250,.1)") {
   return {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 9,
     border: `1px solid ${T.border}`,
     background: bg,
     color,

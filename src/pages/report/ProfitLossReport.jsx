@@ -4,10 +4,12 @@ import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
 import { Badge } from "../../components/Badge";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function ProfitLossReport() {
+  const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, details: [] });
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
@@ -32,22 +34,22 @@ export default function ProfitLossReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Sales Profit & Loss</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Detailed profit analysis for each sale</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("salesProfitLoss")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("detailedProfitAnalysisSale")}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label="Total Revenue" value={money(stats.totalRevenue)} icon="💰" color={T.green} />
-        <StatCard label="Total Cost" value={money(stats.totalCost)} icon="📉" color={T.red} />
-        <StatCard label="Total Profit" value={money(stats.totalProfit)} icon="📈" color={T.accent} />
-        <StatCard label="Avg Margin" value={`${Number(stats.averageMargin || 0).toFixed(2)}%`} icon="📊" color={T.blue} />
+        <StatCard label={t("totalRevenue")} value={money(stats.totalRevenue)} icon="💰" color={T.green} />
+        <StatCard label={t("totalCost")} value={money(stats.totalCost)} icon="📉" color={T.red} />
+        <StatCard label={t("totalProfit")} value={money(stats.totalProfit)} icon="📈" color={T.accent} />
+        <StatCard label={t("avgMargin")} value={`${Number(stats.averageMargin || 0).toFixed(2)}%`} icon="📊" color={T.blue} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
-        <Input label="From" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label="To" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
@@ -55,16 +57,16 @@ export default function ProfitLossReport() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["Invoice", "Date", "Revenue", "Cost", "Profit", "Margin"].map(h => (
+              {[t("invoice"), t("date"), t("revenue"), t("cost"), t("profit"), t("margin")].map(h => (
                 <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
             ) : !data.details || data.details.length === 0 ? (
-               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No records found</td></tr>
+               <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
             ) : (
               data.details.map((item, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>

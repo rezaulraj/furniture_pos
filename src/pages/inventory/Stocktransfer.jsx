@@ -7,6 +7,7 @@ import { useStockTransferStore } from "../../store/stockTransferStore";
 import { useProductStore } from "../../store/productStore";
 import { useBranchStore } from "../../store/branchStore";
 import { useInventoryStore } from "../../store/inventoryStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const STATUS = [
   "pending",
@@ -54,6 +55,7 @@ function NewTransferModal({
   branches,
   inventory,
 }) {
+  const { t } = useLanguageStore();
   const [form, setForm] = useState({
     source_store_id: "",
     destination_store_id: "",
@@ -132,18 +134,18 @@ function NewTransferModal({
   };
 
   const validation = () => {
-    if (!form.source_store_id) return "Source store is required";
-    if (!form.destination_store_id) return "Destination store is required";
+    if (!form.source_store_id) return t("sourceStore") + " " + t("required");
+    if (!form.destination_store_id) return t("destinationStore") + " " + t("required");
 
     if (form.source_store_id === form.destination_store_id) {
-      return "Source and destination stores must be different";
+      return t("sourceDestinationSameError");
     }
 
-    if (!form.product_id) return "Product is required";
-    if (Number(form.quantity) <= 0) return "Quantity must be greater than 0";
+    if (!form.product_id) return t("product") + " " + t("required");
+    if (Number(form.quantity) <= 0) return t("quantityMustBePositive");
 
     if (Number(form.quantity) > availableStock) {
-      return `Insufficient stock. Available: ${availableStock}`;
+      return `${t("insufficientStock")}. ${t("available")}: ${availableStock}`;
     }
 
     return "";
@@ -178,10 +180,10 @@ function NewTransferModal({
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <div>
             <h2 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-              New Stock Transfer
+              {t("newStockTransfer")}
             </h2>
             <p style={{ color: T.textSub, fontSize: 12, margin: "4px 0 0" }}>
-              Move stock from one branch to another
+              {t("moveStockFromOneBranchToAnother")}
             </p>
           </div>
 
@@ -226,7 +228,7 @@ function NewTransferModal({
             gap: 14,
           }}
         >
-          <Field label="Source Store *">
+          <Field label={t("sourceStore") + " *"}>
             <select
               value={form.source_store_id}
               onChange={(e) => {
@@ -240,7 +242,7 @@ function NewTransferModal({
               }}
               style={inputStyle()}
             >
-              <option value="">Select source</option>
+              <option value="">{t("selectSource")}</option>
               {branches.map((b) => (
                 <option key={b.store_id} value={b.store_id}>
                   {b.store_name}
@@ -249,13 +251,13 @@ function NewTransferModal({
             </select>
           </Field>
 
-          <Field label="Destination Store *">
+          <Field label={t("destinationStore") + " *"}>
             <select
               value={form.destination_store_id}
               onChange={setField("destination_store_id")}
               style={inputStyle()}
             >
-              <option value="">Select destination</option>
+              <option value="">{t("selectDestination")}</option>
               {branches
                 .filter(
                   (b) => String(b.store_id) !== String(form.source_store_id),
@@ -270,7 +272,7 @@ function NewTransferModal({
         </div>
 
         <div style={{ marginTop: 14 }}>
-          <Field label="Product *">
+          <Field label={t("product") + " *"}>
             <div style={{ position: "relative" }}>
               <div
                 style={{
@@ -300,8 +302,8 @@ function NewTransferModal({
                   }}
                   placeholder={
                     form.source_store_id
-                      ? "Write product name or SKU..."
-                      : "Select source store first"
+                      ? t("writeProductNameOrSku")
+                      : t("selectSourceStoreFirst")
                   }
                   style={{
                     flex: 1,
@@ -353,7 +355,7 @@ function NewTransferModal({
                         fontSize: 12,
                       }}
                     >
-                      No products with stock in this store
+                      {t("noProductsWithStockInThisStore")}
                     </div>
                   ) : (
                     suggestedProducts.map((p) => {
@@ -399,7 +401,7 @@ function NewTransferModal({
                               }}
                             >
                               {p.sku} •{" "}
-                              {p.category?.category_name || "No Category"}
+                              {p.category?.category_name || t("noCategory")}
                             </p>
                           </div>
 
@@ -421,7 +423,7 @@ function NewTransferModal({
                                 fontSize: 10,
                               }}
                             >
-                              stock
+                              {t("stock")}
                             </p>
                           </div>
                         </button>
@@ -442,7 +444,7 @@ function NewTransferModal({
             gap: 14,
           }}
         >
-          <Field label="Quantity *">
+          <Field label={t("quantity") + " *"}>
             <input
               type="number"
               value={form.quantity}
@@ -462,7 +464,7 @@ function NewTransferModal({
             }}
           >
             <p style={{ color: T.textMut, margin: 0, fontSize: 10 }}>
-              AVAILABLE STOCK
+              {t("availableStock").toUpperCase()}
             </p>
             <p
               style={{
@@ -478,7 +480,7 @@ function NewTransferModal({
         </div>
 
         <div style={{ marginTop: 14 }}>
-          <Field label="Notes">
+          <Field label={t("notes")}>
             <textarea
               rows={3}
               value={form.notes}
@@ -502,7 +504,7 @@ function NewTransferModal({
             }}
           >
             <p style={{ color: T.textMut, margin: 0, fontSize: 10 }}>
-              TRANSFER PREVIEW
+              {t("transferPreview").toUpperCase()}
             </p>
             <p style={{ color: T.text, margin: "6px 0 0", fontWeight: 900 }}>
               {selectedProduct.product_name}
@@ -511,7 +513,7 @@ function NewTransferModal({
               {selectedSource.store_name} → {selectedDestination.store_name}
             </p>
             <p style={{ color: T.accent, margin: "6px 0 0", fontWeight: 900 }}>
-              Quantity: {Number(form.quantity || 0)}
+              {t("quantity")}: {Number(form.quantity || 0)}
             </p>
           </div>
         )}
@@ -522,7 +524,7 @@ function NewTransferModal({
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            Cancel
+            {t("cancel")}
           </Btn>
 
           <Btn
@@ -530,7 +532,7 @@ function NewTransferModal({
             disabled={loading}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            <Ic.Transfer /> {loading ? "Creating..." : "Initiate Transfer"}
+            <Ic.Transfer /> {loading ? t("creating") : t("initiateTransfer")}
           </Btn>
         </div>
       </div>
@@ -539,6 +541,7 @@ function NewTransferModal({
 }
 
 export default function StockTransfer() {
+  const { t } = useLanguageStore();
   const {
     transfers,
     isLoading,
@@ -651,10 +654,10 @@ export default function StockTransfer() {
         }}
       >
         {[
-          ["Total Transfers", transfers.length, T.blue, "🔄"],
-          ["Pending Approval", pending, T.yellow, "⏳"],
-          ["In Transit", inTransit, T.blue, "🚛"],
-          ["Units Moved", completedQty, T.green, "📦"],
+          [t("totalTransfers"), transfers.length, T.blue, "🔄"],
+          [t("pendingApproval"), pending, T.yellow, "⏳"],
+          [t("inTransit"), inTransit, T.blue, "🚛"],
+          [t("unitsMoved"), completedQty, T.green, "📦"],
         ].map(([label, value, color, icon]) => (
           <div
             key={label}
@@ -701,7 +704,7 @@ export default function StockTransfer() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search transfer, product, SKU, store..."
+          placeholder={t("searchTransferProductSkuStore")}
           style={{ ...inputStyle(), flex: 1, minWidth: 240 }}
         />
 
@@ -710,10 +713,10 @@ export default function StockTransfer() {
           onChange={(e) => setStatusFilter(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Status</option>
+          <option value="all">{t("allStatus")}</option>
           {STATUS.map((s) => (
             <option key={s} value={s}>
-              {s.replace("_", " ")}
+              {t(s).replace("_", " ")}
             </option>
           ))}
         </select>
@@ -723,7 +726,7 @@ export default function StockTransfer() {
           onChange={(e) => setStoreFilter(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Stores</option>
+          <option value="all">{t("allStores")}</option>
           {branches.map((b) => (
             <option key={b.store_id} value={b.store_id}>
               {b.store_name}
@@ -732,7 +735,7 @@ export default function StockTransfer() {
         </select>
 
         <Btn onClick={() => setShowNewModal(true)}>
-          <Ic.Transfer /> New Transfer
+          <Ic.Transfer /> {t("newTransfer")}
         </Btn>
       </div>
 
@@ -760,7 +763,7 @@ export default function StockTransfer() {
             gap: 10,
           }}
         >
-          <Badge color="blue">{selected.size} selected</Badge>
+          <Badge color="blue">{selected.size} {t("selected")}</Badge>
           <div style={{ flex: 1 }} />
           <Btn
             variant="success"
@@ -768,7 +771,7 @@ export default function StockTransfer() {
             onClick={bulkApprove}
             disabled={isUpdating}
           >
-            <Ic.Check /> Bulk Approve
+            <Ic.Check /> {t("bulkApprove")}
           </Btn>
           <button
             onClick={() => setSelected(new Set())}
@@ -801,16 +804,16 @@ export default function StockTransfer() {
             onChange={toggleAll}
           />
           {[
-            "TRF ID",
-            "Product",
-            "From",
-            "To",
-            "Qty",
-            "Status",
-            "Date",
-            "Actions",
-          ].map((h) => (
-            <b key={h} style={{ color: T.textMut, fontSize: 10 }}>
+            t("id"),
+            t("product"),
+            t("source"),
+            t("dest"),
+            t("qty"),
+            t("status"),
+            t("date"),
+            t("action"),
+          ].map((h, i) => (
+            <b key={i} style={{ color: T.textMut, fontSize: 10 }}>
               {h.toUpperCase()}
             </b>
           ))}
@@ -818,16 +821,16 @@ export default function StockTransfer() {
 
         {isLoading ? (
           <div style={{ padding: 34, textAlign: "center", color: T.textSub }}>
-            Loading transfers...
+            {t("loading")}...
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: 44, textAlign: "center" }}>
             <div style={{ fontSize: 48 }}>🔄</div>
             <p style={{ color: T.textSub, fontWeight: 700 }}>
-              No stock transfers found
+              {t("noRecordsFound")}
             </p>
             <Btn onClick={() => setShowNewModal(true)}>
-              <Ic.Plus /> Create First Transfer
+              <Ic.Plus /> {t("createFirstTransfer")}
             </Btn>
           </div>
         ) : (
@@ -861,6 +864,7 @@ export default function StockTransfer() {
 
 function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
   const status = transfer.status;
+  const { t } = useLanguageStore();
 
   return (
     <div
@@ -884,7 +888,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
 
       <div>
         <p style={{ color: T.text, margin: 0, fontWeight: 800, fontSize: 12 }}>
-          {transfer.product?.product_name || "Product"}
+          {transfer.product?.product_name || t("product")}
         </p>
         <p style={{ color: T.textMut, margin: "3px 0 0", fontSize: 10 }}>
           {transfer.product?.sku || "—"}
@@ -902,7 +906,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
       <div style={{ color: T.blue, fontWeight: 900 }}>{transfer.quantity}</div>
 
       <Badge color={statusColor(status)} small>
-        {status?.replace("_", " ").toUpperCase()}
+        {t(status).toUpperCase()}
       </Badge>
 
       <div>
@@ -913,7 +917,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
         </p>
         {transfer.completed_date && (
           <p style={{ color: T.green, margin: "3px 0 0", fontSize: 10 }}>
-            Done: {new Date(transfer.completed_date).toLocaleDateString()}
+            {t("done")}: {new Date(transfer.completed_date).toLocaleDateString()}
           </p>
         )}
       </div>
@@ -925,7 +929,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
               color={T.green}
               onClick={() => onStatus(transfer.transfer_id, "approved")}
               disabled={updating}
-              title="Approve"
+              title={t("approve")}
             >
               <Ic.Check />
             </MiniBtn>
@@ -933,7 +937,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
               color={T.red}
               onClick={() => onStatus(transfer.transfer_id, "rejected")}
               disabled={updating}
-              title="Reject"
+              title={t("reject")}
             >
               <Ic.Close />
             </MiniBtn>
@@ -945,7 +949,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
             onClick={() => onStatus(transfer.transfer_id, "in_transit")}
             disabled={updating}
           >
-            Ship
+            {t("ship")}
           </MiniTextBtn>
         )}
 
@@ -954,7 +958,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
             onClick={() => onStatus(transfer.transfer_id, "completed")}
             disabled={updating}
           >
-            Receive
+            {t("receive")}
           </MiniTextBtn>
         )}
 
@@ -963,7 +967,7 @@ function TransferRow({ transfer, selected, onToggle, onStatus, updating }) {
             color={T.red}
             onClick={() => onStatus(transfer.transfer_id, "cancelled")}
             disabled={updating}
-            title="Cancel"
+            title={t("cancel")}
           >
             <Ic.Close />
           </MiniBtn>

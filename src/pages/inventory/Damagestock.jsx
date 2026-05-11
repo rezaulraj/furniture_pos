@@ -7,54 +7,207 @@ import { Input, Select } from "../../components/Input";
 import { useDamageStore } from "../../store/damageStore";
 import { useProductStore } from "../../store/productStore";
 import { useBranchStore } from "../../store/branchStore";
+import { useLanguageStore } from "../../store/languageStore";
 
-const DAMAGE_TYPES = [
-  "Water Damage",
-  "Physical Damage",
-  "Defective Product",
-  "Transit Damage",
-  "Fire/Smoke",
-  "Customer Return",
-  "Theft/Missing",
-  "Pest/Infestation",
-  "Other",
-];
+export default function DamageStock() {
+  const { t } = useLanguageStore();
 
-const STATUS_MAP = {
-  reported: {
-    color: T.red,
-    bg: "rgba(248,113,113,0.1)",
-    border: "rgba(248,113,113,0.28)",
-    icon: "🚨",
-    label: "Reported",
-  },
-  reviewed: {
-    color: T.yellow,
-    bg: "rgba(251,191,36,0.1)",
-    border: "rgba(251,191,36,0.28)",
-    icon: "🔍",
-    label: "Under Review",
-  },
-  resolved: {
-    color: T.green,
-    bg: "rgba(74,222,128,0.1)",
-    border: "rgba(74,222,128,0.28)",
-    icon: "✅",
-    label: "Resolved",
-  },
-  discarded: {
-    color: T.textSub,
-    bg: "rgba(90,61,30,0.12)",
-    border: T.border,
-    icon: "🗑️",
-    label: "Discarded",
-  },
-};
+  const DAMAGE_TYPES = [
+    { value: "Water Damage", label: t("waterDamage") },
+    { value: "Physical Damage", label: t("physicalDamage") },
+    { value: "Defective Product", label: t("defectiveProduct") },
+    { value: "Transit Damage", label: t("transitDamage") },
+    { value: "Fire/Smoke", label: t("fireSmoke") },
+    { value: "Customer Return", label: t("customerReturn") },
+    { value: "Theft/Missing", label: t("theftMissing") },
+    { value: "Pest/Infestation", label: t("pestInfestation") },
+    { value: "Other", label: t("other") },
+  ];
 
-const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
+  const STATUS_MAP = {
+    reported: {
+      color: T.red,
+      bg: "rgba(248,113,113,0.1)",
+      border: "rgba(248,113,113,0.28)",
+      icon: "🚨",
+      label: t("reported"),
+    },
+    reviewed: {
+      color: T.yellow,
+      bg: "rgba(251,191,36,0.1)",
+      border: "rgba(251,191,36,0.28)",
+      icon: "🔍",
+      label: t("reviewed"),
+    },
+    resolved: {
+      color: T.green,
+      bg: "rgba(74,222,128,0.1)",
+      border: "rgba(74,222,128,0.28)",
+      icon: "✅",
+      label: t("resolved"),
+    },
+    discarded: {
+      color: T.textSub,
+      bg: "rgba(90,61,30,0.12)",
+      border: T.border,
+      icon: "🗑️",
+      label: t("discarded"),
+    },
+  };
+
+  const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
+
+  const { damages, isLoading, isSubmitting, error, fetchDamages, reportDamage, updateDamageStatus, clearError } = useDamageStore();
+  const { products, fetchProducts } = useProductStore();
+  const { branches, fetchBranches } = useBranchStore();
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
+
+  useEffect(() => {
+    fetchDamages();
+    fetchProducts();
+    fetchBranches({ is_active: true });
+    return () => clearError?.();
+  }, [fetchDamages, fetchProducts, fetchBranches, clearError]);
+
+  const filtered = useMemo(() => {
+    return damages.filter((d) => {
+      const q = search.toLowerCase();
+      const match =
+        d.product?.product_name?.toLowerCase().includes(q) ||
+        d.product?.sku?.toLowerCase().includes(q) ||
+        String(d.damage_id).includes(q);
+      const matchStatus = statusFilter === "all" || d.status === statusFilter;
+      return match && matchStatus;
+    });
+  }, [damages, search, statusFilter]);
+
+  const handleSaveReport = async (payload) => {
+    try {
+      await reportDamage({
+        ...payload,
+        product_id: Number(payload.product_id),
+        store_id: Number(payload.store_id),
+        quantity: Number(payload.quantity),
+        loss_amount: Number(payload.loss_amount || 0),
+      });
+      setShowReportModal(false);
+    } catch {}
+  };
+
+  const handleUpdateStatus = async (id, status, action_taken) => {
+    try {
+      await updateDamageStatus(id, { status, action_taken });
+      setDetailItem(null);
+    } catch {}
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {[
+          { label: t("totalReports"), value: damages.length, color: T.blue, icon: "📊" },
+          { label: t("pendingReview"), value: damages.filter((d) => d.status === "reported").length, color: T.red, icon: "🚨" },
+          { label: t("underReview"), value: damages.filter((d) => d.status === "reviewed").length, color: T.yellow, icon: "🔍" },
+          { label: t("totalLoss"), value: money(damages.reduce((a, b) => a + Number(b.loss_amount || 0), 0)), color: T.red, icon: "💸" },
+        ].map((k, i) => (
+          <div key={i} style={{ ...card(), padding: 16, borderLeft: `4px solid ${k.color}` }}>
+            <p style={{ color: T.textSub, fontSize: 10, margin: 0, fontWeight: 800 }}>{k.label.toUpperCase()}</p>
+            <p style={{ color: T.text, fontSize: 20, fontWeight: 900, margin: "6px 0 0" }}>{k.icon} {k.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ ...card(), padding: 14, display: "flex", gap: 10 }}>
+        <div style={{ flex: 1 }}>
+          <Input icon={<Ic.Search />} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchByProductSkuId")} />
+        </div>
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          options={[
+            { value: "all", label: t("allStatus") },
+            { value: "reported", label: t("reported") },
+            { value: "reviewed", label: t("reviewed") },
+            { value: "resolved", label: t("resolved") },
+            { value: "discarded", label: t("discarded") },
+          ]}
+        />
+        <Btn onClick={() => setShowReportModal(true)} variant="danger">
+          <Ic.Alert /> {t("reportDamage")}
+        </Btn>
+      </div>
+
+      {error && <div style={{ color: T.red, fontWeight: 800, padding: 10 }}>{error}</div>}
+
+      <div style={{ ...card(), overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead style={{ background: T.bg2 }}>
+            <tr>
+              {[t("id"), t("product"), t("store"), t("qty"), t("loss"), t("type"), t("status"), t("date"), t("action")].map((h) => (
+                <th key={h} style={{ padding: 12, color: T.textMut, fontSize: 10, textAlign: "left", fontWeight: 800 }}>{h.toUpperCase()}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr><td colSpan={9} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={9} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
+            ) : (
+              filtered.map((d) => (
+                <tr key={d.damage_id} style={{ borderBottom: `1px solid ${T.border}` }}>
+                  <td style={{ padding: 12, color: T.accent, fontWeight: 800, fontSize: 12 }}>DMG-{d.damage_id}</td>
+                  <td style={{ padding: 12 }}>
+                    <p style={{ color: T.text, margin: 0, fontWeight: 700, fontSize: 12 }}>{d.product?.product_name}</p>
+                    <small style={{ color: T.textMut }}>{d.product?.sku}</small>
+                  </td>
+                  <td style={{ padding: 12, color: T.textSub, fontSize: 12 }}>{d.store?.store_name}</td>
+                  <td style={{ padding: 12, color: T.red, fontWeight: 700, fontSize: 12 }}>{d.quantity}</td>
+                  <td style={{ padding: 12, color: T.text, fontWeight: 700, fontSize: 12 }}>{money(d.loss_amount)}</td>
+                  <td style={{ padding: 12 }}><Badge color="purple" small>{t(d.damage_type?.replace(/\s+/g, "").toLowerCase() || "other")}</Badge></td>
+                  <td style={{ padding: 12 }}><StatusBadge status={d.status} /></td>
+                  <td style={{ padding: 12, color: T.textSub, fontSize: 11 }}>{new Date(d.reported_date).toLocaleDateString()}</td>
+                  <td style={{ padding: 12 }}>
+                    <button onClick={() => setDetailItem(d)} style={{ background: "transparent", border: "none", color: T.blue, cursor: "pointer" }}><Ic.Eye /></button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {showReportModal && (
+        <ReportModal
+          products={products}
+          branches={branches}
+          loading={isSubmitting}
+          onClose={() => setShowReportModal(false)}
+          onSave={handleSaveReport}
+          DAMAGE_TYPES={DAMAGE_TYPES}
+        />
+      )}
+
+      {detailItem && (
+        <DetailModal
+          damage={detailItem}
+          loading={isSubmitting}
+          onClose={() => setDetailItem(null)}
+          onUpdateStatus={handleUpdateStatus}
+          STATUS_MAP={STATUS_MAP}
+        />
+      )}
+    </div>
+  );
+}
 
 /* ── Report Damage Modal ────────────────────────────────────────── */
-const ReportModal = ({ onClose, onSave, loading, products, branches }) => {
+const ReportModal = ({ onClose, onSave, loading, products, branches, DAMAGE_TYPES }) => {
+  const { t } = useLanguageStore();
   const [form, setForm] = useState({
     product_id: "",
     store_id: "",
@@ -136,10 +289,10 @@ const ReportModal = ({ onClose, onSave, loading, products, branches }) => {
             </div>
             <div>
               <h3 style={{ color: T.text, fontWeight: 900, fontSize: 16, margin: 0 }}>
-                Report Damaged Stock
+                {t("reportDamagedStock")}
               </h3>
               <p style={{ color: T.textSub, fontSize: 11, margin: 0 }}>
-                Document a damage incident for inventory records
+                {t("documentDamageIncident")}
               </p>
             </div>
           </div>
@@ -151,14 +304,14 @@ const ReportModal = ({ onClose, onSave, loading, products, branches }) => {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div style={{ gridColumn: "1/-1", position: "relative" }}>
             <Input
-              label="Search Product *"
+              label={`${t("searchProduct")} *`}
               value={productSearch}
               onChange={(e) => {
                 setProductSearch(e.target.value);
                 setShowSuggest(true);
               }}
               onFocus={() => setShowSuggest(true)}
-              placeholder="Start typing product name or SKU..."
+              placeholder={t("startTypingProductNameOrSku")}
             />
             {showSuggest && suggestedProducts.length > 0 && (
               <div
@@ -206,62 +359,62 @@ const ReportModal = ({ onClose, onSave, loading, products, branches }) => {
 
           <div style={{ gridColumn: "1/-1" }}>
             <Select
-              label="Store *"
+              label={`${t("store")} *`}
               value={form.store_id}
               onChange={set("store_id")}
               options={[
-                { value: "", label: "Select Store" },
+                { value: "", label: t("selectStore") },
                 ...branches.map((b) => ({ value: b.store_id, label: b.store_name }))
               ]}
             />
           </div>
 
           <Input
-            label="Quantity Damaged *"
+            label={`${t("quantityDamaged")} *`}
             value={form.quantity}
             onChange={set("quantity")}
             type="number"
             placeholder="1"
           />
           <Input
-            label="Loss Amount (৳)"
+            label={`${t("lossAmount")} (৳)`}
             value={form.loss_amount}
             onChange={set("loss_amount")}
             type="number"
-            placeholder="Estimated cost loss"
+            placeholder={t("estimatedCostLoss")}
           />
 
           <div style={{ gridColumn: "1/-1" }}>
             <Select
-              label="Damage Type"
+              label={t("damageType")}
               value={form.damage_type}
               onChange={set("damage_type")}
-              options={DAMAGE_TYPES.map((t) => ({ value: t, label: t }))}
+              options={DAMAGE_TYPES}
             />
           </div>
 
           <div style={{ gridColumn: "1/-1" }}>
             <label style={{ color: T.textSub, fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6 }}>
-              DAMAGE DESCRIPTION *
+              {t("damageDescription").toUpperCase()} *
             </label>
             <textarea
               value={form.description}
               onChange={set("description")}
               rows={3}
-              placeholder="Describe the damage in detail..."
+              placeholder={t("describeDamageInDetail")}
               style={textareaStyle()}
             />
           </div>
 
           <div style={{ gridColumn: "1/-1" }}>
             <label style={{ color: T.textSub, fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6 }}>
-              INITIAL ACTION TAKEN
+              {t("initialActionTaken").toUpperCase()}
             </label>
             <textarea
               value={form.action_taken}
               onChange={set("action_taken")}
               rows={2}
-              placeholder="Any immediate action taken (optional)..."
+              placeholder={t("anyImmediateActionTaken")}
               style={textareaStyle()}
             />
           </div>
@@ -269,7 +422,7 @@ const ReportModal = ({ onClose, onSave, loading, products, branches }) => {
 
         <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
           <Btn variant="ghost" onClick={onClose} style={{ flex: 1, justifyContent: "center" }}>
-            Cancel
+            {t("cancel")}
           </Btn>
           <Btn
             onClick={() => onSave(form)}
@@ -277,7 +430,7 @@ const ReportModal = ({ onClose, onSave, loading, products, branches }) => {
             variant="danger"
             style={{ flex: 1, justifyContent: "center" }}
           >
-            {loading ? "Reporting..." : "Submit Damage Report"}
+            {loading ? t("reporting") : t("submitDamageReport")}
           </Btn>
         </div>
       </div>
@@ -285,25 +438,13 @@ const ReportModal = ({ onClose, onSave, loading, products, branches }) => {
   );
 };
 
-const textareaStyle = () => ({
-  width: "100%",
-  background: T.bg3,
-  border: `1px solid ${T.border}`,
-  borderRadius: 8,
-  padding: "9px 10px",
-  color: T.text,
-  fontSize: 12,
-  outline: "none",
-  resize: "none",
-  boxSizing: "border-box",
-  fontFamily: "inherit",
-  lineHeight: 1.5,
-});
-
 /* ── Damage Detail Modal ────────────────────────────────────────── */
-const DetailModal = ({ damage, onClose, onUpdateStatus, loading }) => {
+const DetailModal = ({ damage, onClose, onUpdateStatus, loading, STATUS_MAP }) => {
+  const { t } = useLanguageStore();
   const [action, setAction] = useState(damage.action_taken || "");
   const sc = STATUS_MAP[damage.status] || STATUS_MAP.reported;
+
+  const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
   return (
     <div
@@ -324,7 +465,7 @@ const DetailModal = ({ damage, onClose, onUpdateStatus, loading }) => {
             <div style={{ color: T.red, fontWeight: 900, fontSize: 15, fontFamily: "monospace" }}>
               DMG-{damage.damage_id}
             </div>
-            <div style={{ color: T.textSub, fontSize: 11 }}>Damage Report Details</div>
+            <div style={{ color: T.textSub, fontSize: 11 }}>{t("damageReportDetails")}</div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: T.textSub }}>
             <Ic.Close />
@@ -335,7 +476,7 @@ const DetailModal = ({ damage, onClose, onUpdateStatus, loading }) => {
           <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 20, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
             {sc.icon} {sc.label.toUpperCase()}
           </span>
-          <Badge color="purple" small>{damage.damage_type}</Badge>
+          <Badge color="purple" small>{t(damage.damage_type?.replace(/\s+/g, "").toLowerCase() || "other")}</Badge>
           <Badge color="blue" small>{damage.store?.store_name}</Badge>
         </div>
 
@@ -348,29 +489,29 @@ const DetailModal = ({ damage, onClose, onUpdateStatus, loading }) => {
               <p style={{ color: T.text, fontWeight: 700, fontSize: 13, margin: 0 }}>{damage.product?.product_name}</p>
               <div style={{ display: "flex", gap: 7, marginTop: 4 }}>
                 <Badge color="gold" small>{damage.product?.sku}</Badge>
-                <span style={{ color: T.red, fontSize: 11, fontWeight: 700 }}>{damage.quantity} unit{damage.quantity > 1 ? "s" : ""}</span>
+                <span style={{ color: T.red, fontSize: 11, fontWeight: 700 }}>{damage.quantity} {damage.quantity > 1 ? t("units") : t("unit")}</span>
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
               <p style={{ color: T.red, fontWeight: 900, fontSize: 16, margin: 0 }}>{money(damage.loss_amount)}</p>
-              <p style={{ color: T.textMut, fontSize: 9.5, margin: 0 }}>loss</p>
+              <p style={{ color: T.textMut, fontSize: 9.5, margin: 0 }}>{t("loss")}</p>
             </div>
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <InfoRow label="Date Reported" value={new Date(damage.reported_date).toLocaleDateString()} />
-          <InfoRow label="Reported By" value={damage.reporter?.full_name || "System"} />
-          <InfoRow label="Store" value={damage.store?.store_name} />
+          <InfoRow label={t("dateReported")} value={new Date(damage.reported_date).toLocaleDateString()} />
+          <InfoRow label={t("reportedBy")} value={damage.reporter?.full_name || t("system")} />
+          <InfoRow label={t("store")} value={damage.store?.store_name} />
         </div>
 
         <div style={{ marginTop: 14, padding: "11px 12px", background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 9 }}>
-          <p style={{ color: T.textMut, fontSize: 9.5, fontWeight: 800, margin: "0 0 5px" }}>DESCRIPTION</p>
+          <p style={{ color: T.textMut, fontSize: 9.5, fontWeight: 800, margin: "0 0 5px" }}>{t("description").toUpperCase()}</p>
           <p style={{ color: T.text, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{damage.description}</p>
         </div>
 
         <div style={{ marginTop: 12 }}>
-          <label style={{ color: T.textSub, fontSize: 10, fontWeight: 800, display: "block", marginBottom: 6 }}>ACTION TAKEN / NOTES</label>
+          <label style={{ color: T.textSub, fontSize: 10, fontWeight: 800, display: "block", marginBottom: 6 }}>{t("actionTakenNotes").toUpperCase()}</label>
           <textarea value={action} onChange={(e) => setAction(e.target.value)} rows={2} style={textareaStyle()} />
         </div>
 
@@ -383,7 +524,7 @@ const DetailModal = ({ damage, onClose, onUpdateStatus, loading }) => {
               disabled={loading}
               style={{ flex: 1, justifyContent: "center" }}
             >
-              🔍 Review
+              🔍 {t("review")}
             </Btn>
           )}
           {(damage.status === "reported" || damage.status === "reviewed") && (
@@ -394,7 +535,7 @@ const DetailModal = ({ damage, onClose, onUpdateStatus, loading }) => {
               disabled={loading}
               style={{ flex: 1, justifyContent: "center" }}
             >
-              <Ic.Check /> Resolve
+              <Ic.Check /> {t("resolve")}
             </Btn>
           )}
           {damage.status !== "discarded" && (
@@ -405,7 +546,7 @@ const DetailModal = ({ damage, onClose, onUpdateStatus, loading }) => {
               disabled={loading}
               style={{ flex: 1, justifyContent: "center" }}
             >
-              🗑️ Discard
+              🗑️ {t("discard")}
             </Btn>
           )}
         </div>
@@ -421,149 +562,17 @@ const InfoRow = ({ label, value }) => (
   </div>
 );
 
-export default function DamageStock() {
-  const { damages, isLoading, isSubmitting, error, fetchDamages, reportDamage, updateDamageStatus, clearError } = useDamageStore();
-  const { products, fetchProducts } = useProductStore();
-  const { branches, fetchBranches } = useBranchStore();
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [detailItem, setDetailItem] = useState(null);
-
-  useEffect(() => {
-    fetchDamages();
-    fetchProducts();
-    fetchBranches({ is_active: true });
-    return () => clearError?.();
-  }, [fetchDamages, fetchProducts, fetchBranches, clearError]);
-
-  const filtered = useMemo(() => {
-    return damages.filter((d) => {
-      const q = search.toLowerCase();
-      const match =
-        d.product?.product_name?.toLowerCase().includes(q) ||
-        d.product?.sku?.toLowerCase().includes(q) ||
-        String(d.damage_id).includes(q);
-      const matchStatus = statusFilter === "all" || d.status === statusFilter;
-      return match && matchStatus;
-    });
-  }, [damages, search, statusFilter]);
-
-  const handleSaveReport = async (payload) => {
-    try {
-      await reportDamage({
-        ...payload,
-        product_id: Number(payload.product_id),
-        store_id: Number(payload.store_id),
-        quantity: Number(payload.quantity),
-        loss_amount: Number(payload.loss_amount || 0),
-      });
-      setShowReportModal(false);
-    } catch {}
-  };
-
-  const handleUpdateStatus = async (id, status, action_taken) => {
-    try {
-      await updateDamageStatus(id, { status, action_taken });
-      setDetailItem(null);
-    } catch {}
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-        {[
-          { label: "Total Reports", value: damages.length, color: T.blue, icon: "📊" },
-          { label: "Pending Review", value: damages.filter((d) => d.status === "reported").length, color: T.red, icon: "🚨" },
-          { label: "Under Review", value: damages.filter((d) => d.status === "reviewed").length, color: T.yellow, icon: "🔍" },
-          { label: "Total Loss", value: money(damages.reduce((a, b) => a + Number(b.loss_amount || 0), 0)), color: T.red, icon: "💸" },
-        ].map((k, i) => (
-          <div key={i} style={{ ...card(), padding: 16, borderLeft: `4px solid ${k.color}` }}>
-            <p style={{ color: T.textSub, fontSize: 10, margin: 0, fontWeight: 800 }}>{k.label.toUpperCase()}</p>
-            <p style={{ color: T.text, fontSize: 20, fontWeight: 900, margin: "6px 0 0" }}>{k.icon} {k.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ ...card(), padding: 14, display: "flex", gap: 10 }}>
-        <div style={{ flex: 1 }}>
-          <Input icon={<Ic.Search />} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by product, SKU, ID..." />
-        </div>
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          options={[
-            { value: "all", label: "All Status" },
-            { value: "reported", label: "Reported" },
-            { value: "reviewed", label: "Reviewed" },
-            { value: "resolved", label: "Resolved" },
-            { value: "discarded", label: "Discarded" },
-          ]}
-        />
-        <Btn onClick={() => setShowReportModal(true)} variant="danger">
-          <Ic.Alert /> Report Damage
-        </Btn>
-      </div>
-
-      {error && <div style={{ color: T.red, fontWeight: 800, padding: 10 }}>{error}</div>}
-
-      <div style={{ ...card(), overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead style={{ background: T.bg2 }}>
-            <tr>
-              {["ID", "Product", "Store", "Qty", "Loss", "Type", "Status", "Date", "Actions"].map((h) => (
-                <th key={h} style={{ padding: 12, color: T.textMut, fontSize: 10, textAlign: "left", fontWeight: 800 }}>{h.toUpperCase()}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr><td colSpan={9} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading records...</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={9} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No records found</td></tr>
-            ) : (
-              filtered.map((d) => (
-                <tr key={d.damage_id} style={{ borderBottom: `1px solid ${T.border}` }}>
-                  <td style={{ padding: 12, color: T.accent, fontWeight: 800, fontSize: 12 }}>DMG-{d.damage_id}</td>
-                  <td style={{ padding: 12 }}>
-                    <p style={{ color: T.text, margin: 0, fontWeight: 700, fontSize: 12 }}>{d.product?.product_name}</p>
-                    <small style={{ color: T.textMut }}>{d.product?.sku}</small>
-                  </td>
-                  <td style={{ padding: 12, color: T.textSub, fontSize: 12 }}>{d.store?.store_name}</td>
-                  <td style={{ padding: 12, color: T.red, fontWeight: 700, fontSize: 12 }}>{d.quantity}</td>
-                  <td style={{ padding: 12, color: T.text, fontWeight: 700, fontSize: 12 }}>{money(d.loss_amount)}</td>
-                  <td style={{ padding: 12 }}><Badge color="purple" small>{d.damage_type}</Badge></td>
-                  <td style={{ padding: 12 }}><StatusBadge status={d.status} /></td>
-                  <td style={{ padding: 12, color: T.textSub, fontSize: 11 }}>{new Date(d.reported_date).toLocaleDateString()}</td>
-                  <td style={{ padding: 12 }}>
-                    <button onClick={() => setDetailItem(d)} style={{ background: "transparent", border: "none", color: T.blue, cursor: "pointer" }}><Ic.Eye /></button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {showReportModal && (
-        <ReportModal
-          products={products}
-          branches={branches}
-          loading={isSubmitting}
-          onClose={() => setShowReportModal(false)}
-          onSave={handleSaveReport}
-        />
-      )}
-
-      {detailItem && (
-        <DetailModal
-          damage={detailItem}
-          loading={isSubmitting}
-          onClose={() => setDetailItem(null)}
-          onUpdateStatus={handleUpdateStatus}
-        />
-      )}
-    </div>
-  );
-}
+const textareaStyle = () => ({
+  width: "100%",
+  background: T.bg3,
+  border: `1px solid ${T.border}`,
+  borderRadius: 8,
+  padding: "9px 10px",
+  color: T.text,
+  fontSize: 12,
+  outline: "none",
+  resize: "none",
+  boxSizing: "border-box",
+  fontFamily: "inherit",
+  lineHeight: 1.5,
+});

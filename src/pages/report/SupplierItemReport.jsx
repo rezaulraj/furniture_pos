@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function SupplierItemReport() {
+  const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState([]);
 
@@ -26,26 +28,26 @@ export default function SupplierItemReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Supplier Item Analysis</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Track products sourced from different suppliers</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("supplierItemAnalysis")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("trackProductsSourcedSuppliers")}</p>
         </div>
-        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> Print Report</Btn>
+        <Btn onClick={() => window.print()} variant="ghost"><Ic.Print /> {t("printReport")}</Btn>
       </div>
 
       <div style={{ ...card(), overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["Supplier Name", "Product Name", "SKU", "Total Qty", "Total Value"].map(h => (
+              {[t("supplierName"), t("productName"), t("sku"), t("totalQty"), t("totalValue")].map(h => (
                 <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-               <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+               <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
             ) : data.length === 0 ? (
-               <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No data found</td></tr>
+               <tr><td colSpan={5} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
             ) : (
               data.map((item, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>

@@ -4,10 +4,12 @@ import { Ic } from "../../components/Icons";
 import { usePurchaseStore } from "../../store/purchaseStore";
 import { Input, Select } from "../../components/Input";
 import { StatusBadge } from "../../components/Badge";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function PurchaseReport() {
+  const { t } = useLanguageStore();
   const { purchases, fetchPurchases, isLoading } = usePurchaseStore();
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
@@ -49,41 +51,41 @@ export default function PurchaseReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Purchase Report</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Track stock procurement and supplier payments</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("purchaseReport")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("trackStockProcurementSupplierPayments")}</p>
         </div>
-        <button onClick={() => window.print()} style={btnStyle()}><Ic.Print /> Print</button>
+        <button onClick={() => window.print()} style={btnStyle()}><Ic.Print /> {t("print")}</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label="Total Purchases" value={money(stats.total)} icon="🛒" color={T.blue} />
-        <StatCard label="Paid to Suppliers" value={money(stats.paid)} icon="💸" color={T.green} />
-        <StatCard label="Outstanding Debt" value={money(stats.due)} icon="🛑" color={T.red} />
-        <StatCard label="Total Orders" value={stats.count} icon="📦" color={T.accent} />
+        <StatCard label={t("totalPurchases")} value={money(stats.total)} icon="🛒" color={T.blue} />
+        <StatCard label={t("paidToSuppliers")} value={money(stats.paid)} icon="💸" color={T.green} />
+        <StatCard label={t("outstandingDebt")} value={money(stats.due)} icon="🛑" color={T.red} />
+        <StatCard label={t("totalOrders")} value={stats.count} icon="📦" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
         <div style={{ flex: 1 }}>
-          <Select label="Store" value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: "All Stores" }, ...stores]} />
+          <Select label={t("store")} value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: t("allStores") }, ...stores]} />
         </div>
-        <Input label="From" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label="To" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
       </div>
 
       <div style={{ ...card(), overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["PO Number", "Date", "Supplier", "Store", "Amount", "Paid", "Due", "Status"].map(h => (
+              {[t("poNumber"), t("date"), t("supplier"), t("store"), t("amount"), t("paid"), t("due"), t("status")].map(h => (
                 <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
             ) : filtered.length === 0 ? (
-               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No records found</td></tr>
+               <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
             ) : (
               filtered.map(p => (
                 <tr key={p.purchase_id} style={{ borderBottom: `1px solid ${T.border}` }}>

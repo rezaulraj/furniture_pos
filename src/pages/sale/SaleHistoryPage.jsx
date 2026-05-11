@@ -5,11 +5,13 @@ import { Btn } from "../../components/Button";
 import { Input, Select } from "../../components/Input";
 import { Ic } from "../../components/Icons";
 import { useSaleStore } from "../../store/saleStore";
+import { useLanguageStore } from "../../store/languageStore";
 import SaleInvoicePDF from "../../components/SaleInvoicePDF";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function SaleHistoryPage() {
+  const { t } = useLanguageStore();
   const {
     sales,
     currentSale,
@@ -125,25 +127,25 @@ export default function SaleHistoryPage() {
       >
         {[
           {
-            label: "Total Sales",
+            label: t("totalSales"),
             value: money(totalSales),
             color: T.green,
             icon: "📈",
           },
           {
-            label: "Total Paid",
+            label: t("totalPaid"),
             value: money(totalPaid),
             color: T.blue,
             icon: "✅",
           },
           {
-            label: "Total Due",
+            label: t("totalDue"),
             value: money(totalDue),
             color: T.red,
             icon: "⚠️",
           },
           {
-            label: "Invoices",
+            label: t("invoices"),
             value: `${filtered.length}`,
             color: T.accent,
             icon: "🧾",
@@ -219,7 +221,7 @@ export default function SaleHistoryPage() {
             icon={<Ic.Search />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search invoice, customer, store..."
+            placeholder={t("searchInvoiceCustomerStore")}
           />
         </div>
 
@@ -227,32 +229,32 @@ export default function SaleHistoryPage() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           options={[
-            { value: "all", label: "All Status" },
-            { value: "paid", label: "Paid" },
-            { value: "partial", label: "Partial" },
-            { value: "pending", label: "Pending" },
-            { value: "failed", label: "Failed" },
-            { value: "refunded", label: "Refunded" },
-            { value: "cancelled", label: "Cancelled" },
+            { value: "all", label: t("allStatus") },
+            { value: "paid", label: t("paid") },
+            { value: "partial", label: t("partial") },
+            { value: "pending", label: t("pending") },
+            { value: "failed", label: t("failed") },
+            { value: "refunded", label: t("refunded") },
+            { value: "cancelled", label: t("cancelled") },
           ]}
         />
 
         <Input
-          label="From"
+          label={t("from")}
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
           type="date"
         />
 
         <Input
-          label="To"
+          label={t("to")}
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
           type="date"
         />
 
         <Btn variant="ghost" size="sm" onClick={() => fetchSales()}>
-          <Ic.RefreshCw /> Refresh
+          <Ic.RefreshCw /> {t("refresh")}
         </Btn>
       </div>
 
@@ -283,14 +285,14 @@ export default function SaleHistoryPage() {
             gap: 12,
           }}
         >
-          <Badge color="accent">{selected.size} selected</Badge>
+          <Badge color="accent">{selected.size} {t("selected")}</Badge>
           <span style={{ color: T.textSub, fontSize: 12 }}>
-            Total:{" "}
+            {t("total")}:{" "}
             <strong style={{ color: T.green }}>{money(totalSelected)}</strong>
           </span>
           <div style={{ flex: 1 }} />
           <Btn variant="ghost" size="sm">
-            <Ic.Download /> Export CSV
+            <Ic.Download /> {t("exportCsv")}
           </Btn>
         </div>
       )}
@@ -318,17 +320,17 @@ export default function SaleHistoryPage() {
                 </th>
 
                 {[
-                  "Invoice No.",
-                  "Customer",
-                  "Items",
-                  "Total Amount",
-                  "Paid",
-                  "Due",
-                  "Status",
-                  "Seller",
-                  "Store",
-                  "Date",
-                  "Actions",
+                  t("invoiceNo"),
+                  t("customer"),
+                  t("items"),
+                  t("totalAmount"),
+                  t("paid"),
+                  t("due"),
+                  t("status"),
+                  t("seller"),
+                  t("store"),
+                  t("date"),
+                  t("actions"),
                 ].map((h) => (
                   <th
                     key={h}
@@ -361,7 +363,7 @@ export default function SaleHistoryPage() {
                       fontWeight: 700,
                     }}
                   >
-                    Loading sales...
+                    {t("loadingSales")}
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
@@ -375,7 +377,7 @@ export default function SaleHistoryPage() {
                     }}
                   >
                     <div style={{ fontSize: 46 }}>🧾</div>
-                    No sale history found
+                    {t("noSaleHistoryFound")}
                   </td>
                 </tr>
               ) : (
@@ -416,13 +418,13 @@ export default function SaleHistoryPage() {
 
                     <td style={td()}>
                       <span style={{ color: T.text, fontSize: 12 }}>
-                        {s.customer?.full_name || "Walk-in Customer"}
+                        {s.customer?.full_name || t("walkInCustomer")}
                       </span>
                     </td>
 
                     <td style={td()}>
                       <Badge color="accent" small>
-                        {s.items?.length || 0} items
+                        {s.items?.length || 0} {t("items")}
                       </Badge>
                     </td>
 
@@ -455,7 +457,7 @@ export default function SaleHistoryPage() {
                     <td style={td()}>
                       <div style={{ display: "flex", gap: 5 }}>
                         <button
-                          title="View"
+                          title={t("view")}
                           onClick={() => handleView(s.sale_id)}
                           style={iconBtn(T.blue, "rgba(96,165,250,0.1)")}
                         >
@@ -463,7 +465,7 @@ export default function SaleHistoryPage() {
                         </button>
 
                         <button
-                          title="PDF"
+                          title={t("print")}
                           onClick={() => handlePrintPdf(s.sale_id)}
                           style={iconBtn(T.accent, "rgba(172,82,8,0.1)")}
                         >
@@ -494,6 +496,7 @@ export default function SaleHistoryPage() {
 }
 
 function SaleViewModal({ sale, onClose, onPdf }) {
+  const { t } = useLanguageStore();
   return (
     <div
       style={{
@@ -524,8 +527,8 @@ function SaleViewModal({ sale, onClose, onPdf }) {
               {sale.invoice_number}
             </h2>
             <p style={{ color: T.textSub, margin: "5px 0 0", fontSize: 12 }}>
-              {sale.customer?.full_name || "Walk-in Customer"} •{" "}
-              {sale.store?.store_name || "Store"}
+              {sale.customer?.full_name || t("walkInCustomer")} •{" "}
+              {sale.store?.store_name || t("store")}
             </p>
           </div>
 
@@ -554,13 +557,13 @@ function SaleViewModal({ sale, onClose, onPdf }) {
           }}
         >
           <Info
-            label="Total"
+            label={t("total")}
             value={money(sale.total_amount)}
             color={T.green}
           />
-          <Info label="Paid" value={money(sale.paid_amount)} color={T.blue} />
-          <Info label="Due" value={money(sale.due_amount)} color={T.red} />
-          <Info label="Status" value={sale.payment_status} color={T.accent} />
+          <Info label={t("paid")} value={money(sale.paid_amount)} color={T.blue} />
+          <Info label={t("due")} value={money(sale.due_amount)} color={T.red} />
+          <Info label={t("status")} value={sale.payment_status} color={T.accent} />
         </div>
 
         <div style={{ ...card(), marginTop: 16, overflow: "hidden" }}>
@@ -576,10 +579,10 @@ function SaleViewModal({ sale, onClose, onPdf }) {
               fontWeight: 900,
             }}
           >
-            <div>PRODUCT</div>
-            <div>PRICE</div>
-            <div>QTY</div>
-            <div>TOTAL</div>
+            <div>{t("product").toUpperCase()}</div>
+            <div>{t("price").toUpperCase()}</div>
+            <div>{t("qty").toUpperCase()}</div>
+            <div>{t("total").toUpperCase()}</div>
           </div>
 
           {sale.items?.map((item) => (
@@ -595,7 +598,7 @@ function SaleViewModal({ sale, onClose, onPdf }) {
             >
               <div>
                 <p style={{ color: T.text, margin: 0, fontWeight: 800 }}>
-                  {item.product?.product_name || "Product"}
+                  {item.product?.product_name || t("product")}
                 </p>
                 <p
                   style={{ color: T.textMut, margin: "3px 0 0", fontSize: 10 }}
@@ -620,10 +623,10 @@ function SaleViewModal({ sale, onClose, onPdf }) {
             onClick={onClose}
             style={{ flex: 1, justifyContent: "center" }}
           >
-            Close
+            {t("close")}
           </Btn>
           <Btn onClick={onPdf} style={{ flex: 1, justifyContent: "center" }}>
-            <Ic.Print /> Show PDF
+            <Ic.Print /> {t("showPdf")}
           </Btn>
         </div>
       </div>

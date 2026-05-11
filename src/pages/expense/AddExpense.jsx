@@ -5,8 +5,10 @@ import { Ic } from "../../components/Icons";
 import { useExpenseStore } from "../../store/expenseStore";
 import { useBranchStore } from "../../store/branchStore";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function AddExpense() {
+  const { t } = useLanguageStore();
   const { createExpense, isSubmitting, error, clearError } = useExpenseStore();
   const { branches, fetchBranches } = useBranchStore();
   const { user } = useAuthStore();
@@ -45,8 +47,8 @@ export default function AddExpense() {
   if (success) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
-        <h2 style={{ color: T.green }}>Expense Added Successfully!</h2>
-        <p>Redirecting to list...</p>
+        <h2 style={{ color: T.green }}>{t("expenseAddedSuccessfully")}</h2>
+        <p>{t("redirectingToList")}</p>
       </div>
     );
   }
@@ -54,11 +56,11 @@ export default function AddExpense() {
   return (
     <div style={{ maxWidth: 600, margin: "0 auto" }}>
       <div style={{ ...card(), padding: 24 }}>
-        <h2 style={{ marginTop: 0, color: T.text }}>Add New Expense</h2>
+        <h2 style={{ marginTop: 0, color: T.text }}>{t("addNewExpense")}</h2>
         {error && <div style={{ color: T.red, marginBottom: 15 }}>{error}</div>}
 
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
-          <Field label="Expense Title *">
+          <Field label={`${t("expenseTitle")} *`}>
             <input
               required
               value={form.expense_title}
@@ -69,29 +71,29 @@ export default function AddExpense() {
           </Field>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field label="Category *">
+            <Field label={`${t("category")} *`}>
               <select
                 required
                 value={form.expense_category_id}
                 onChange={(e) => setForm({ ...form, expense_category_id: e.target.value })}
                 style={inputStyle()}
               >
-                <option value="">Select Category</option>
-                <option value="1">General</option>
-                <option value="2">Utility</option>
-                <option value="3">Rent</option>
-                <option value="4">Salary</option>
+                <option value="">{t("selectCategory")}</option>
+                <option value="1">{t("general")}</option>
+                <option value="2">{t("utility")}</option>
+                <option value="3">{t("rent")}</option>
+                <option value="4">{t("salary")}</option>
               </select>
             </Field>
 
-            <Field label="Store *">
+            <Field label={`${t("store")} *`}>
               <select
                 required
                 value={form.store_id}
                 onChange={(e) => setForm({ ...form, store_id: e.target.value })}
                 style={inputStyle()}
               >
-                <option value="">Select Store</option>
+                <option value="">{t("selectStore")}</option>
                 {branches.map((b) => (
                   <option key={b.store_id} value={b.store_id}>{b.store_name}</option>
                 ))}
@@ -100,7 +102,7 @@ export default function AddExpense() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field label="Amount *">
+            <Field label={`${t("amount")} *`}>
               <input
                 required
                 type="number"
@@ -110,7 +112,7 @@ export default function AddExpense() {
               />
             </Field>
 
-            <Field label="Date *">
+            <Field label={`${t("date")} *`}>
               <input
                 required
                 type="date"
@@ -121,18 +123,18 @@ export default function AddExpense() {
             </Field>
           </div>
 
-          <Field label="Payment Method">
+          <Field label={t("paymentMethod")}>
             <select
               value={form.payment_method}
               onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
               style={inputStyle()}
             >
-              <option value="cash">Cash</option>
-              <option value="bank">Bank</option>
+              <option value="cash">{t("cash")}</option>
+              <option value="bank">{t("bank")}</option>
             </select>
           </Field>
 
-          <Field label="Notes">
+          <Field label={t("notes")}>
             <textarea
               rows={3}
               value={form.notes}
@@ -142,9 +144,9 @@ export default function AddExpense() {
           </Field>
 
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <Btn type="button" variant="ghost" onClick={() => window.history.back()} style={{ flex: 1 }}>Cancel</Btn>
+            <Btn type="button" variant="ghost" onClick={() => window.history.back()} style={{ flex: 1 }}>{t("cancel")}</Btn>
             <Btn type="submit" disabled={isSubmitting} style={{ flex: 2 }}>
-              {isSubmitting ? "Saving..." : "Save Expense"}
+              {isSubmitting ? t("saving") : t("saveExpense")}
             </Btn>
           </div>
         </form>

@@ -6,6 +6,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useDashboardStore } from "../../store/dashboardStore";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -21,6 +22,7 @@ const statusColor = (s) =>
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { t, lang } = useLanguageStore();
   const { summary, isLoading, error, fetchDashboardSummary } =
     useDashboardStore();
 
@@ -35,54 +37,54 @@ export default function DashboardPage() {
 
   const KPI = [
     {
-      label: "Total Revenue",
+      label: t("totalRevenue"),
       value: money(summary?.revenue),
-      sub: `${summary?.sales_count || 0} sales`,
+      sub: `${summary?.sales_count || 0} ${t("sales")}`,
       color: T.green,
       icon: <Ic.TrendUp />,
     },
     {
-      label: "Total Purchases",
+      label: t("totalPurchases"),
       value: money(summary?.purchases_total),
-      sub: "Purchase cost",
+      sub: t("cost"),
       color: T.blue,
       icon: <Ic.Receipt />,
     },
     {
-      label: "Net Profit",
+      label: t("netProfit"),
       value: money(profit),
-      sub: "Revenue - purchase - expense",
+      sub: t("revenuePurchaseExpenseProfitComparison"),
       color: T.accent,
       icon: <Ic.TrendUp />,
     },
     {
-      label: "Paid Revenue",
+      label: t("paidRevenue"),
       value: money(summary?.paid_revenue),
-      sub: "Collected amount",
+      sub: t("collectedAmount"),
       color: T.green,
       icon: <Ic.Cash />,
     },
     {
-      label: "Pending Dues",
+      label: t("pendingDues"),
       value: money(summary?.due_revenue),
-      sub: "Customer due",
+      sub: t("customerDue"),
       color: T.red,
       icon: <Ic.Alert />,
     },
     {
-      label: "Products",
+      label: t("products"),
       value: Number(summary?.product_count || 0).toLocaleString(),
-      sub: `${summary?.low_stock_alerts || 0} low stock`,
+      sub: `${summary?.low_stock_alerts || 0} ${t("lowStock")}`,
       color: T.yellow,
       icon: <Ic.Package />,
     },
   ];
 
   const chartData = [
-    { label: "Revenue", value: revenue, color: T.green },
-    { label: "Purchases", value: purchases, color: T.blue },
-    { label: "Expenses", value: expenses, color: T.red },
-    { label: "Profit", value: Math.max(0, profit), color: T.accent },
+    { label: t("revenue"), value: revenue, color: T.green },
+    { label: t("purchases"), value: purchases, color: T.blue },
+    { label: t("expenses"), value: expenses, color: T.red },
+    { label: t("profit"), value: Math.max(0, profit), color: T.accent },
   ];
 
   const maxChart = Math.max(...chartData.map((x) => x.value), 1);
@@ -123,7 +125,7 @@ export default function DashboardPage() {
                 letterSpacing: "0.06em",
               }}
             >
-              DASHBOARD OVERVIEW
+              {t("dashboardOverview")}
             </p>
 
             <h2
@@ -134,22 +136,21 @@ export default function DashboardPage() {
                 margin: "4px 0 6px",
               }}
             >
-              Welcome back, {user?.full_name || user?.username || "Admin"} 👋
+              {t("welcomeBack")} {user?.full_name || user?.username || "Admin"} 👋
             </h2>
 
             <p style={{ color: T.textSub, fontSize: 12, margin: 0 }}>
-              {user?.store?.store_name || "Furniture Shop"} • Live business
-              summary
+              {user?.store?.store_name || "Furniture Shop"} • {t("liveBusinessSummary")}
             </p>
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>
             <Btn onClick={() => navigate("/sales/new")}>
-              <Ic.Sale /> New Sale
+              <Ic.Sale /> {t("newSale")}
             </Btn>
 
             <Btn variant="ghost" onClick={() => fetchDashboardSummary()}>
-              Refresh
+              {t("refresh")}
             </Btn>
           </div>
         </div>
@@ -227,7 +228,7 @@ export default function DashboardPage() {
                     margin: "5px 0 4px",
                   }}
                 >
-                  {isLoading ? "Loading..." : k.value}
+                  {isLoading ? t("loading") : k.value}
                 </p>
 
                 <p style={{ color: T.textMut, fontSize: 11, margin: 0 }}>
@@ -266,15 +267,15 @@ export default function DashboardPage() {
           >
             <div>
               <h3 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-                Financial Snapshot
+                {t("financialSnapshot")}
               </h3>
               <p style={{ color: T.textSub, margin: "4px 0 0", fontSize: 12 }}>
-                Revenue, purchase, expense and profit comparison
+                {t("revenuePurchaseExpenseProfitComparison")}
               </p>
             </div>
 
             <Badge color={profit >= 0 ? "green" : "red"} small>
-              {profit >= 0 ? "PROFIT" : "LOSS"}
+              {profit >= 0 ? t("profit").toUpperCase() : t("loss").toUpperCase()}
             </Badge>
           </div>
 
@@ -322,38 +323,38 @@ export default function DashboardPage() {
 
         <div style={{ ...card(), padding: "18px 20px" }}>
           <h3 style={{ color: T.text, margin: 0, fontWeight: 900 }}>
-            Quick Actions
+            {t("quickActions")}
           </h3>
           <p style={{ color: T.textSub, fontSize: 12, margin: "4px 0 14px" }}>
-            Frequently used operations
+            {t("frequentlyUsedOperations")}
           </p>
 
           <div style={{ display: "grid", gap: 10 }}>
             {[
               {
-                label: "New Sale",
-                sub: "Create POS invoice",
+                label: t("newSale"),
+                sub: t("createPosInvoice"),
                 icon: <Ic.Sale />,
                 color: T.green,
                 nav: "/sales/new",
               },
               {
-                label: "Stock Alerts",
-                sub: `${summary?.low_stock_alerts || 0} items need attention`,
+                label: t("lowStockAlert"),
+                sub: `${summary?.low_stock_alerts || 0} ${t("itemsNeedAttention")}`,
                 icon: <Ic.Alert />,
                 color: T.yellow,
                 nav: "/inventory/low-stock",
               },
               {
-                label: "Purchase Entry",
-                sub: "Receive new stock",
+                label: t("purchase"),
+                sub: t("receiveNewStock"),
                 icon: <Ic.Package />,
                 color: T.blue,
                 nav: "/purchases/new",
               },
               {
-                label: "Sales History",
-                sub: "View reports & invoices",
+                label: t("saleHistory"),
+                sub: t("viewReportsInvoices"),
                 icon: <Ic.Receipt />,
                 color: T.accent,
                 nav: "/sales/history",
@@ -418,7 +419,7 @@ export default function DashboardPage() {
           <h3
             style={{ color: T.text, fontWeight: 900, fontSize: 14, margin: 0 }}
           >
-            Recent Sales
+            {t("recentSales")}
           </h3>
 
           <Btn
@@ -426,7 +427,7 @@ export default function DashboardPage() {
             size="sm"
             onClick={() => navigate("/sales/history")}
           >
-            View All
+            {t("viewAll")}
           </Btn>
         </div>
 
@@ -434,13 +435,13 @@ export default function DashboardPage() {
           <thead>
             <tr>
               {[
-                "Invoice",
-                "Customer",
-                "Amount",
-                "Paid",
-                "Due",
-                "Status",
-                "Date",
+                t("invoice"),
+                t("customer"),
+                t("amount"),
+                t("paid"),
+                t("due"),
+                t("status"),
+                t("date"),
               ].map((h) => (
                 <th key={h} style={th()}>
                   {h.toUpperCase()}
@@ -453,13 +454,13 @@ export default function DashboardPage() {
             {isLoading ? (
               <tr>
                 <td colSpan={7} style={emptyTd()}>
-                  Loading recent sales...
+                  {t("loadingRecentSales")}
                 </td>
               </tr>
             ) : !summary?.recent_sales?.length ? (
               <tr>
                 <td colSpan={7} style={emptyTd()}>
-                  No recent sales found
+                  {t("noData")}
                 </td>
               </tr>
             ) : (
@@ -470,7 +471,7 @@ export default function DashboardPage() {
                 >
                   <td style={tdAccent()}>{sale.invoice_number}</td>
                   <td style={td()}>
-                    {sale.customer?.full_name || "Walk-in Customer"}
+                    {sale.customer?.full_name || t("walkInCustomer")}
                   </td>
                   <td style={tdStrong(T.text)}>{money(sale.total_amount)}</td>
                   <td style={tdStrong(T.green)}>{money(sale.paid_amount)}</td>

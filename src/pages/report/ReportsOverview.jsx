@@ -1,39 +1,41 @@
 import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
 import { useNavigate } from "react-router-dom";
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function ReportsOverview() {
   const navigate = useNavigate();
+  const { t } = useLanguageStore();
 
   const categories = [
     {
-      name: "Sales & Revenue",
+      name: t("salesRevenue"),
       reports: [
-        { title: "General Sales", icon: <Ic.Cash />, desc: "Overall sales performance and invoices", path: "/reports/sales" },
-        { title: "Daily Sales", icon: <Ic.CalendarIcon />, desc: "Summary of sales for a specific day", path: "/reports/sales/daily" },
-        { title: "Product-wise Sales", icon: <Ic.Package />, desc: "Analyze which products are selling most", path: "/reports/sales/product" },
-        { title: "Customer-wise Sales", icon: <Ic.Users />, desc: "Sales data aggregated by customer", path: "/reports/sales/customer" },
-        { title: "Sales Profit/Loss", icon: <Ic.TrendUp />, desc: "Profit margins on each sale", path: "/reports/sales/profit" },
-        { title: "Refunds/Returns", icon: <Ic.RefreshCw />, desc: "Track sales and purchase returns", path: "/reports/refunds" },
+        { title: t("generalSales"), icon: <Ic.Cash />, desc: t("overallSalesPerformance"), path: "/reports/sales" },
+        { title: t("dailySales"), icon: <Ic.CalendarIcon />, desc: t("summaryOfSalesSpecificDay"), path: "/reports/sales/daily" },
+        { title: t("productWiseSales"), icon: <Ic.Package />, desc: t("analyzeWhichProductsSelling"), path: "/reports/sales/product" },
+        { title: t("customerWiseSales"), icon: <Ic.Users />, desc: t("salesDataAggregatedByCustomer"), path: "/reports/sales/customer" },
+        { title: t("salesProfitLoss"), icon: <Ic.TrendUp />, desc: t("profitMarginsOnEachSale"), path: "/reports/sales/profit" },
+        { title: t("refundsReturns"), icon: <Ic.RefreshCw />, desc: t("trackSalesPurchaseReturns"), path: "/reports/refunds" },
       ]
     },
     {
-      name: "Purchases & Suppliers",
+      name: t("purchasesSuppliers"),
       reports: [
-        { title: "Purchase Report", icon: <Ic.ShoppingCart />, desc: "Track all stock purchases", path: "/reports/purchase" },
-        { title: "Item-wise Purchase", icon: <Ic.Package />, desc: "Purchases grouped by products", path: "/reports/purchases/items" },
-        { title: "Supplier Report", icon: <Ic.User />, desc: "Overview of all suppliers and dues", path: "/reports/suppliers" },
-        { title: "Supplier Item Analysis", icon: <Ic.Package />, desc: "Products sourced from specific suppliers", path: "/reports/suppliers/items" },
-        { title: "Supplier Profitability", icon: <Ic.Cash />, desc: "Profit analysis by supplier sourcing", path: "/reports/suppliers/profit-loss" },
+        { title: t("purchaseReport"), icon: <Ic.ShoppingCart />, desc: t("trackAllStockPurchases"), path: "/reports/purchase" },
+        { title: t("itemWisePurchase"), icon: <Ic.Package />, desc: t("purchasesGroupedByProducts"), path: "/reports/purchases/items" },
+        { title: t("supplierReport"), icon: <Ic.User />, desc: t("overviewAllSuppliersDues"), path: "/reports/suppliers" },
+        { title: t("supplierItemAnalysis"), icon: <Ic.Package />, desc: t("productsSourcedFromSuppliers"), path: "/reports/suppliers/items" },
+        { title: t("supplierProfitability"), icon: <Ic.Cash />, desc: t("profitAnalysisBySupplier"), path: "/reports/suppliers/profit-loss" },
       ]
     },
     {
-      name: "Finance & Expenses",
+      name: t("financeExpenses"),
       reports: [
-        { title: "Cash Flow", icon: <Ic.TrendUp />, desc: "Monitor cash inflows and outflows", path: "/reports/cash-flow" },
-        { title: "Bank Payments", icon: <Ic.Card />, desc: "Report of all bank-based transactions", path: "/reports/payments/bank" },
-        { title: "Expense Report", icon: <Ic.Eye />, desc: "Categorized business expenses", path: "/reports/expenses" },
-        { title: "Inventory Valuation", icon: <Ic.Package />, desc: "Current stock levels and valuation", path: "/reports/inventory" },
+        { title: t("cashFlow"), icon: <Ic.TrendUp />, desc: t("monitorCashInflowsOutflows"), path: "/reports/cash-flow" },
+        { title: t("bankPayments"), icon: <Ic.Card />, desc: t("reportAllBankTransactions"), path: "/reports/payments/bank" },
+        { title: t("expenseReport"), icon: <Ic.Eye />, desc: t("categorizedBusinessExpenses"), path: "/reports/expenses" },
+        { title: t("inventoryValuation"), icon: <Ic.Package />, desc: t("currentStockLevelsValuation"), path: "/reports/inventory" },
       ]
     }
   ];
@@ -41,8 +43,8 @@ export default function ReportsOverview() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 32, paddingBottom: 40 }}>
       <div>
-        <h1 style={{ color: T.text, margin: 0 }}>Reports & Analytics</h1>
-        <p style={{ color: T.textSub, margin: "5px 0 0" }}>Comprehensive data analysis for your business</p>
+        <h1 style={{ color: T.text, margin: 0 }}>{t("reportsAnalytics")}</h1>
+        <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("comprehensiveDataAnalysis")}</p>
       </div>
 
       {categories.map((cat, idx) => (

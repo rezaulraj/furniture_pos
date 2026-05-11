@@ -5,6 +5,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useReturnStore } from "../../store/returnStore";
 import { usePurchaseStore } from "../../store/purchaseStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -27,6 +28,7 @@ const statusColor = (s) =>
       : "red";
 
 export default function PurchaseReturn() {
+  const { t } = useLanguageStore();
   const {
     purchaseReturns,
     isLoading,
@@ -86,16 +88,16 @@ export default function PurchaseReturn() {
         }}
       >
         {[
-          ["Total Returns", filtered.length, T.accent, "↩️"],
-          ["Refund Amount", money(totalRefund), T.red, "💸"],
+          [t("totalReturns"), filtered.length, T.accent, "↩️"],
+          [t("refundAmount"), money(totalRefund), T.red, "💸"],
           [
-            "Pending",
+            t("pending"),
             filtered.filter((r) => r.status === "pending").length,
             T.yellow,
             "⏳",
           ],
           [
-            "Completed",
+            t("completed"),
             filtered.filter((r) => r.status === "completed").length,
             T.green,
             "✅",
@@ -141,7 +143,7 @@ export default function PurchaseReturn() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search return, PO, product..."
+          placeholder={t("searchReturnPoProduct")}
           style={{ ...inputStyle(), flex: 1, minWidth: 240 }}
         />
 
@@ -150,16 +152,16 @@ export default function PurchaseReturn() {
           onChange={(e) => setStatusF(e.target.value)}
           style={inputStyle()}
         >
-          <option value="all">All Status</option>
+          <option value="all">{t("allStatus")}</option>
           {["pending", "approved", "rejected", "completed"].map((s) => (
             <option key={s} value={s}>
-              {s}
+              {t(s)}
             </option>
           ))}
         </select>
 
         <Btn onClick={() => setShowModal(true)}>
-          <Ic.Plus /> New Return
+          <Ic.Plus /> {t("newReturn")}
         </Btn>
       </div>
 
@@ -181,16 +183,16 @@ export default function PurchaseReturn() {
           <thead style={{ background: T.bg2 }}>
             <tr>
               {[
-                "Return",
+                t("return"),
                 "PO",
-                "Supplier",
-                "Product",
-                "Qty",
-                "Refund",
-                "Reason",
-                "Status",
-                "Date",
-                "Action",
+                t("supplier"),
+                t("product"),
+                t("qty"),
+                t("refund"),
+                t("reason"),
+                t("status"),
+                t("date"),
+                t("action"),
               ].map((h) => (
                 <th key={h} style={th()}>
                   {h.toUpperCase()}
@@ -203,13 +205,13 @@ export default function PurchaseReturn() {
             {isLoading ? (
               <tr>
                 <td colSpan={10} style={emptyTd()}>
-                  Loading purchase returns...
+                  {t("loadingPurchaseReturns")}
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={10} style={emptyTd()}>
-                  No purchase return found
+                  {t("noPurchaseReturnFound")}
                 </td>
               </tr>
             ) : (
@@ -231,7 +233,7 @@ export default function PurchaseReturn() {
                   <td style={td()}>{r.reason || "—"}</td>
                   <td style={td()}>
                     <Badge color={statusColor(r.status)} small>
-                      {r.status?.toUpperCase()}
+                      {t(r.status || "pending")?.toUpperCase()}
                     </Badge>
                   </td>
                   <td style={td()}>
@@ -268,7 +270,7 @@ export default function PurchaseReturn() {
                           disabled={isUpdating}
                           onClick={() => handleStatus(r.return_id, "completed")}
                         >
-                          Complete
+                          {t("complete")}
                         </MiniTextBtn>
                       )}
                       <MiniBtn color={T.blue} onClick={() => setViewReturn(r)}>
@@ -298,7 +300,7 @@ export default function PurchaseReturn() {
 
       {viewReturn && (
         <ReturnViewModal
-          title="Purchase Return Details"
+          title={t("purchaseReturnDetails")}
           data={viewReturn}
           onClose={() => setViewReturn(null)}
         />
@@ -314,6 +316,7 @@ function PurchaseReturnModal({
   onSubmit,
   loading,
 }) {
+  const { t } = useLanguageStore();
   const [purchaseSearch, setPurchaseSearch] = useState("");
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -353,9 +356,9 @@ function PurchaseReturnModal({
   };
 
   const submit = async () => {
-    if (!selectedPurchase) return alert("Select purchase first");
-    if (!selectedItem) return alert("Select product first");
-    if (Number(form.quantity) <= 0) return alert("Quantity required");
+    if (!selectedPurchase) return alert(t("selectPurchaseFirst"));
+    if (!selectedItem) return alert(t("selectProductFirst"));
+    if (Number(form.quantity) <= 0) return alert(t("quantityRequired"));
 
     await onSubmit({
       purchase_id: Number(selectedPurchase.purchase_id),
@@ -368,12 +371,12 @@ function PurchaseReturnModal({
   };
 
   return (
-    <ModalShell title="Create Purchase Return" onClose={onClose}>
-      <Field label="Search PO">
+    <ModalShell title={t("createPurchaseReturn")} onClose={onClose}>
+      <Field label={t("searchPo")}>
         <input
           value={purchaseSearch}
           onChange={(e) => setPurchaseSearch(e.target.value)}
-          placeholder="Search PO/supplier..."
+          placeholder={t("searchPoSupplierPlaceholder")}
           style={inputStyle()}
         />
       </Field>
@@ -396,7 +399,7 @@ function PurchaseReturnModal({
             >
               <strong>{p.po_number}</strong>
               <span>
-                {p.supplier?.supplier_name || "Supplier"} •{" "}
+                {p.supplier?.supplier_name || t("supplier")} •{" "}
                 {money(p.total_amount)}
               </span>
             </button>
@@ -411,11 +414,11 @@ function PurchaseReturnModal({
           >
             <b style={{ color: T.text }}>{selectedPurchase.po_number}</b>
             <p style={{ color: T.textSub, margin: "4px 0 0" }}>
-              {selectedPurchase.supplier?.supplier_name || "Supplier"}
+              {selectedPurchase.supplier?.supplier_name || t("supplier")}
             </p>
           </div>
 
-          <Field label="Product">
+          <Field label={t("product")}>
             <select
               onChange={(e) => handleItem(e.target.value)}
               style={inputStyle()}
@@ -423,13 +426,13 @@ function PurchaseReturnModal({
                 selectedItem?.purchase_item_id || selectedItem?.product_id || ""
               }
             >
-              <option value="">Select purchased product</option>
+              <option value="">{t("selectPurchasedProduct")}</option>
               {selectedPurchase.items?.map((item) => (
                 <option
                   key={item.purchase_item_id || item.product_id}
                   value={item.purchase_item_id || item.product_id}
                 >
-                  {item.product?.product_name || "Product"} — Qty:{" "}
+                  {item.product?.product_name || t("product")} — {t("qty")}:{" "}
                   {item.quantity_received || item.quantity_ordered}
                 </option>
               ))}
@@ -439,7 +442,7 @@ function PurchaseReturnModal({
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Quantity">
+        <Field label={t("qty")}>
           <input
             type="number"
             min="1"
@@ -451,7 +454,7 @@ function PurchaseReturnModal({
           />
         </Field>
 
-        <Field label="Refund Amount">
+        <Field label={t("refundAmount")}>
           <input
             type="number"
             min="0"
@@ -464,19 +467,19 @@ function PurchaseReturnModal({
         </Field>
       </div>
 
-      <Field label="Status">
+      <Field label={t("status")}>
         <select
           value={form.status}
           onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
           style={inputStyle()}
         >
-          <option value="pending">pending</option>
-          <option value="approved">approved</option>
-          <option value="completed">completed</option>
+          <option value="pending">{t("pending")}</option>
+          <option value="approved">{t("approved")}</option>
+          <option value="completed">{t("completed")}</option>
         </select>
       </Field>
 
-      <Field label="Reason">
+      <Field label={t("reason")}>
         <textarea
           rows={3}
           value={form.reason}
@@ -491,14 +494,14 @@ function PurchaseReturnModal({
           onClick={onClose}
           style={{ flex: 1, justifyContent: "center" }}
         >
-          Cancel
+          {t("cancel")}
         </Btn>
         <Btn
           onClick={submit}
           disabled={loading}
           style={{ flex: 1, justifyContent: "center" }}
         >
-          {loading ? "Creating..." : "Create Return"}
+          {loading ? t("creating") : t("createReturn")}
         </Btn>
       </div>
     </ModalShell>
@@ -548,22 +551,23 @@ function ModalShell({ title, children, onClose }) {
 }
 
 function ReturnViewModal({ title, data, onClose }) {
+  const { t } = useLanguageStore();
   return (
     <ModalShell title={title} onClose={onClose}>
-      <Info label="Return ID" value={`PRR-${data.return_id}`} />
+      <Info label={t("returnId")} value={`PRR-${data.return_id}`} />
       <Info
-        label="Product"
+        label={t("product")}
         value={data.product?.product_name || data.product_id}
       />
-      <Info label="Quantity" value={data.quantity} />
-      <Info label="Refund" value={money(data.refund_amount)} />
-      <Info label="Reason" value={data.reason || "—"} />
-      <Info label="Status" value={data.status} />
+      <Info label={t("qty")} value={data.quantity} />
+      <Info label={t("refund")} value={money(data.refund_amount)} />
+      <Info label={t("reason")} value={data.reason || "—"} />
+      <Info label={t("status")} value={t(data.status || "pending")} />
       <Btn
         onClick={onClose}
         style={{ width: "100%", justifyContent: "center", marginTop: 12 }}
       >
-        Close
+        {t("close")}
       </Btn>
     </ModalShell>
   );

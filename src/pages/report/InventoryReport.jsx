@@ -5,10 +5,12 @@ import { useInventoryStore } from "../../store/inventoryStore";
 import { useProductStore } from "../../store/productStore";
 import { Select } from "../../components/Input";
 import { Badge } from "../../components/Badge";
+import { useLanguageStore } from "../../store/languageStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function InventoryReport() {
+  const { t } = useLanguageStore();
   const { inventory, fetchInventory, isLoading } = useInventoryStore();
   const { products, fetchProducts } = useProductStore();
   const [storeFilter, setStoreFilter] = useState("all");
@@ -52,55 +54,55 @@ export default function InventoryReport() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ color: T.text, margin: 0 }}>Inventory Report</h1>
-          <p style={{ color: T.textSub, margin: "5px 0 0" }}>Stock levels and asset valuation</p>
+          <h1 style={{ color: T.text, margin: 0 }}>{t("inventoryReport")}</h1>
+          <p style={{ color: T.textSub, margin: "5px 0 0" }}>{t("stockLevelsAssetValuation")}</p>
         </div>
-        <button onClick={() => window.print()} style={btnStyle()}><Ic.Print /> Print</button>
+        <button onClick={() => window.print()} style={btnStyle()}><Ic.Print /> {t("print")}</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label="Total Stock" value={stats.totalItems} icon="📦" color={T.blue} />
-        <StatCard label="Stock Value" value={money(stats.valuation)} icon="💎" color={T.green} />
-        <StatCard label="Low Stock Items" value={stats.lowStockCount} icon="⚠️" color={T.red} />
-        <StatCard label="Product Types" value={stats.types} icon="🏷️" color={T.accent} />
+        <StatCard label={t("totalStock")} value={stats.totalItems} icon="📦" color={T.blue} />
+        <StatCard label={t("stockValue")} value={money(stats.valuation)} icon="💎" color={T.green} />
+        <StatCard label={t("lowStockItems")} value={stats.lowStockCount} icon="⚠️" color={T.red} />
+        <StatCard label={t("productTypes")} value={stats.types} icon="🏷️" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
         <div style={{ width: 300 }}>
-          <Select label="Filter by Store" value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: "All Stores" }, ...stores]} />
+          <Select label={t("filterByStore")} value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: t("allStores") }, ...stores]} />
         </div>
         <div style={{ flex: 1 }} />
-        <button onClick={() => fetchInventory()} style={btnStyle()}><Ic.RefreshCw /> Refresh</button>
+        <button onClick={() => fetchInventory()} style={btnStyle()}><Ic.RefreshCw /> {t("refresh")}</button>
       </div>
 
       <div style={{ ...card(), overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: T.bg2 }}>
             <tr>
-              {["Product", "SKU", "Store", "Current Stock", "Unit Price", "Total Value", "Status"].map(h => (
+              {[t("product"), t("sku"), t("store"), t("currentStock"), t("unitPrice"), t("totalValue"), t("status")].map(h => (
                 <th key={h} style={{ padding: "12px 15px", textAlign: "left", color: T.textMut, fontSize: 11, fontWeight: 800 }}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-               <tr><td colSpan={7} style={{ padding: 40, textAlign: "center", color: T.textSub }}>Loading...</td></tr>
+               <tr><td colSpan={7} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
             ) : filtered.length === 0 ? (
-               <tr><td colSpan={7} style={{ padding: 40, textAlign: "center", color: T.textSub }}>No inventory records found</td></tr>
+               <tr><td colSpan={7} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
             ) : (
               filtered.map(item => {
                 const prod = products.find(p => p.product_id === item.product_id);
                 const isLow = Number(item.quantity) <= Number(prod?.min_stock_level || 5);
                 return (
                   <tr key={item.inventory_id} style={{ borderBottom: `1px solid ${T.border}` }}>
-                    <td style={{ padding: "12px 15px", color: T.text, fontWeight: 700 }}>{prod?.product_name || "Unknown Product"}</td>
+                    <td style={{ padding: "12px 15px", color: T.text, fontWeight: 700 }}>{prod?.product_name || t("unknownProduct")}</td>
                     <td style={{ padding: "12px 15px", color: T.textSub }}>{prod?.sku || "—"}</td>
                     <td style={{ padding: "12px 15px", color: T.textSub }}>{item.store?.store_name}</td>
                     <td style={{ padding: "12px 15px", color: isLow ? T.red : T.text, fontWeight: 900 }}>{item.quantity}</td>
                     <td style={{ padding: "12px 15px", color: T.textMut }}>{money(prod?.purchase_price)}</td>
                     <td style={{ padding: "12px 15px", color: T.text, fontWeight: 700 }}>{money(item.quantity * (prod?.purchase_price || 0))}</td>
                     <td style={{ padding: "12px 15px" }}>
-                      <Badge color={isLow ? "red" : "green"}>{isLow ? "Low Stock" : "In Stock"}</Badge>
+                      <Badge color={isLow ? "red" : "green"}>{isLow ? t("lowStock") : t("inStock")}</Badge>
                     </td>
                   </tr>
                 );

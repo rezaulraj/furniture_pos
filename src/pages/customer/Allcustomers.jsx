@@ -44,28 +44,18 @@ export default function AllCustomers() {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    const params = { page, limit: 10 };
+    const params = { page, limit: 10, search };
     if (statusF !== "all") params.is_active = statusF === "active";
     fetchCustomers(params);
     clearError();
-  }, [page, statusF]);
+  }, [page, statusF, search]);
 
   const handleStatusChange = (val) => {
     setStatusF(val);
     setPage(1);
   };
 
-  // Client-side search on current page data
-  const filtered = useMemo(() => {
-    if (!search.trim()) return customers;
-    const q = search.toLowerCase();
-    return customers.filter((c) =>
-      c.full_name?.toLowerCase().includes(q) ||
-      c.customer_code?.toLowerCase().includes(q) ||
-      (c.phone || "").toLowerCase().includes(q) ||
-      (c.email || "").toLowerCase().includes(q)
-    );
-  }, [customers, search]);
+  const filtered = customers;
 
   const fillForm = (c) => ({
     full_name: c.full_name || "",

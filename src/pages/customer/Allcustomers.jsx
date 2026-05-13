@@ -159,9 +159,10 @@ export default function AllCustomers() {
     } catch {}
   };
 
-  const total = pagination?.total ?? customers.length;
-  const activeCount = customers.filter((c) => c.is_active).length;
-  const inactiveCount = customers.filter((c) => !c.is_active).length;
+  const summary = useCustomerStore.getState().summary || {};
+  const total = summary.count || 0;
+  const activeCount = summary.activeCount || 0;
+  const inactiveCount = summary.inactiveCount || 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

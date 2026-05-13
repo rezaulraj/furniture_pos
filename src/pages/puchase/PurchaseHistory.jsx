@@ -13,6 +13,7 @@ export default function PurchaseHistory() {
   const { t } = useLanguageStore();
   const {
     purchases,
+    summary,
     currentPurchase,
     pagination,
     isLoading,
@@ -37,9 +38,10 @@ export default function PurchaseHistory() {
 
   const filtered = purchases;
 
-  const total = filtered.reduce((s, p) => s + Number(p.total_amount || 0), 0);
-  const paid = filtered.reduce((s, p) => s + Number(p.paid_amount || 0), 0);
-  const due = filtered.reduce((s, p) => s + Number(p.due_amount || 0), 0);
+  const total = summary?.totalAmount || 0;
+  const paid = summary?.totalPaid || 0;
+  const due = summary?.totalDue || 0;
+  const count = summary?.count || 0;
 
   const openView = async (id) => {
     const purchase = await fetchPurchaseById(id);
@@ -59,7 +61,7 @@ export default function PurchaseHistory() {
           [t("totalPurchase"), money(total), T.accent, "📦"],
           [t("paid"), money(paid), T.green, "✅"],
           [t("due"), money(due), T.red, "⚠️"],
-          [t("records"), filtered.length, T.blue, "🧾"],
+          [t("records"), count, T.blue, "🧾"],
         ].map(([label, value, color, icon]) => (
           <div
             key={label}

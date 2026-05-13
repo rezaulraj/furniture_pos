@@ -5,6 +5,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useCategoryStore } from "../../store/categoryStore";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const emptyForm = {
   category_name: "",
@@ -415,6 +416,7 @@ export default function Categories() {
   const { t, lang } = useLanguageStore();
   const {
     categories,
+    pagination,
     isLoading,
     isSubmitting,
     isDeleting,
@@ -428,28 +430,28 @@ export default function Categories() {
 
   const [search, setSearch] = useState("");
   const [statusF, setStatusF] = useState("all");
+  const [page, setPage] = useState(1);
   const [modalMode, setModalMode] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    const params = { page, limit: 10, search };
+    if (statusF !== "all") params.is_active = statusF === "active";
+    fetchCategories(params);
+  }, [page, statusF, search]);
 
-  const filtered = useMemo(() => {
-    return categories.filter((c) => {
-      const matchesSearch =
-        c.category_name?.toLowerCase().includes(search.toLowerCase()) ||
-        (c.description || "").toLowerCase().includes(search.toLowerCase());
+  // Reset page to 1 when filters change
+  const handleStatusChange = (val) => {
+    setStatusF(val);
+    setPage(1);
+  };
 
-      const matchesStatus =
-        statusF === "all" ||
-        (statusF === "active" ? c.is_active : !c.is_active);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [categories, search, statusF]);
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    setPage(1);
+  };
 
   const openCreate = () => {
     setModalMode("create");
@@ -640,7 +642,7 @@ export default function Categories() {
           </span>
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder={t("searchCategory")}
             style={{
               flex: 1,
@@ -661,7 +663,7 @@ export default function Categories() {
           ].map(([value, label]) => (
             <button
               key={value}
-              onClick={() => setStatusF(value)}
+              onClick={() => handleStatusChange(value)}
               style={{
                 height: 38,
                 padding: "0 14px",
@@ -742,7 +744,7 @@ export default function Categories() {
           >
             {t("loading")}...
           </div>
-        ) : filtered.length === 0 ? (
+        ) : categories.length === 0 ? (
           <div
             style={{
               padding: 40,
@@ -767,7 +769,7 @@ export default function Categories() {
             </div>
           </div>
         ) : (
-          filtered.map((category) => (
+          categories.map((category) => (
             <div
               key={category.category_id}
               style={{
@@ -852,6 +854,7 @@ export default function Categories() {
           ))
         )}
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
 
       {(modalMode === "create" || modalMode === "edit") && (
         <CategoryModal

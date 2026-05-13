@@ -9,6 +9,8 @@ const normalizeError = (error, fallback) =>
 
 export const useCategoryStore = create((set, get) => ({
   categories: [],
+  summary: {},
+  pagination: null,
   isLoading: false,
   isSubmitting: false,
   isDeleting: false,
@@ -21,9 +23,23 @@ export const useCategoryStore = create((set, get) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/categories", { params });
-      const categories = res.data?.data || [];
-      set({ categories, isLoading: false });
-      return categories;
+      const payload = res.data?.data;
+
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        set({
+          categories: isNested ? result.data : (Array.isArray(result) ? result : []),
+          summary: isNested ? result.summary : {},
+          pagination: payload.meta || null,
+          isLoading: false,
+        });
+        return isNested ? result.data : result;
+      } else {
+        const data = payload?.data || payload || [];
+        set({ categories: Array.isArray(data) ? data : [], summary: payload?.summary || {}, pagination: payload?.meta || null, isLoading: false });
+        return Array.isArray(data) ? data : [];
+      }
     } catch (error) {
       const message = normalizeError(error, "Failed to load categories");
       set({ error: message, isLoading: false });

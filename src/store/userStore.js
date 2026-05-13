@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useUserStore = create((set) => ({
   users: [],
+  summary: {},
   currentUser: null,
   pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
   isLoading: false,
@@ -22,15 +23,23 @@ export const useUserStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/users", { params });
-      const raw = res.data?.data;
-      // Handle both paginated and plain array responses
-      if (raw && raw.data && raw.meta) {
-        set({ users: raw.data, pagination: raw.meta, isLoading: false });
-        return raw.data;
+      const payload = res.data?.data;
+
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        set({
+          users: isNested ? result.data : (Array.isArray(result) ? result : []),
+          summary: isNested ? result.summary : {},
+          pagination: payload.meta || {},
+          isLoading: false,
+        });
+        return isNested ? result.data : result;
+      } else {
+        const data = Array.isArray(payload) ? payload : (payload?.data || payload || []);
+        set({ users: data, summary: payload?.summary || {}, pagination: payload?.meta || {}, isLoading: false });
+        return data;
       }
-      const users = raw || [];
-      set({ users, isLoading: false });
-      return users;
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load users"),

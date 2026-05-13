@@ -5,6 +5,7 @@ import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
 import { Badge } from "../../components/Badge";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -12,13 +13,21 @@ export default function ProfitLossReport() {
   const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, details: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
 
   const loadData = async () => {
     try {
-      const res = await fetchReport("sales/profit", { startDate: dateFrom, endDate: dateTo });
-      setData(res || { summary: {}, details: [] });
+      const res = await fetchReport("sales/profit", { startDate: dateFrom, endDate: dateTo, page, limit: 10 });
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: res?.summary || {}, details: res?.details || [] });
+        setPagination(res?.meta || null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -26,7 +35,7 @@ export default function ProfitLossReport() {
 
   useEffect(() => {
     loadData();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, page]);
 
   const stats = data.summary || {};
 
@@ -86,6 +95,7 @@ export default function ProfitLossReport() {
           </tbody>
         </table>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
 import { StatusBadge } from "../../components/Badge";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -12,12 +13,20 @@ export default function DailySalesReport() {
   const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, sales: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   const loadData = async () => {
     try {
-      const res = await fetchReport("sales/daily", { date });
-      setData(res || { summary: {}, sales: [] });
+      const res = await fetchReport("sales/daily", { date, page, limit: 10 });
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: res?.summary || {}, sales: res?.sales || [] });
+        setPagination(res?.meta || null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -25,7 +34,7 @@ export default function DailySalesReport() {
 
   useEffect(() => {
     loadData();
-  }, [date]);
+  }, [date, page]);
 
   const stats = data.summary || {};
 
@@ -43,7 +52,7 @@ export default function DailySalesReport() {
         <StatCard label={t("totalRevenue")} value={money(stats.totalAmount)} icon="💰" color={T.green} />
         <StatCard label={t("totalReceived")} value={money(stats.totalPaid)} icon="📥" color={T.blue} />
         <StatCard label={t("totalDue")} value={money(stats.totalDue)} icon="⏳" color={T.red} />
-        <StatCard label={t("totalInvoices")} value={data.sales?.length || 0} icon="🧾" color={T.accent} />
+        <StatCard label={t("totalInvoices")} value={stats.count || 0} icon="🧾" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
@@ -80,6 +89,7 @@ export default function DailySalesReport() {
           </tbody>
         </table>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

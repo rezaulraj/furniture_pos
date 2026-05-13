@@ -9,6 +9,8 @@ const normalizeError = (error, fallback) =>
 
 export const useDamageStockStore = create((set) => ({
   damageStocks: [],
+  pagination: {},
+  summary: {},
   isLoading: false,
   isSubmitting: false,
   error: "",
@@ -20,9 +22,22 @@ export const useDamageStockStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/damage-stock", { params });
-      const damageStocks = res.data?.data || [];
-      set({ damageStocks, isLoading: false });
-      return damageStocks;
+      const payload = res.data?.data;
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        const list = isNested ? result.data : (Array.isArray(result) ? result : []);
+        set({
+          damageStocks: list,
+          summary: isNested ? result.summary : {},
+          pagination: payload.meta || {},
+          isLoading: false
+        });
+        return list;
+      }
+      const list = Array.isArray(payload) ? payload : [];
+      set({ damageStocks: list, isLoading: false });
+      return list;
     } catch (error) {
       const message = normalizeError(error, "Failed to load damage stocks");
       set({ error: message, isLoading: false });

@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useInventoryStore = create((set) => ({
   inventory: [],
+  summary: {},
   pagination: {},
   currentInventory: null,
   isLoading: false,
@@ -22,24 +23,23 @@ export const useInventoryStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/inventory", { params });
-      const body = res.data;
-      const payload = body?.data;
+      const payload = res.data?.data;
 
       if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+
         set({
-          inventory: payload.data || [],
+          inventory: isNested ? result.data : (Array.isArray(result) ? result : []),
+          summary: isNested ? result.summary : {},
           pagination: payload.meta || {},
           isLoading: false,
         });
-        return payload.data;
+        return isNested ? result.data : result;
       } else {
-        const inventoryArray = Array.isArray(payload) ? payload : (payload?.data || []);
-        set({
-          inventory: inventoryArray,
-          pagination: payload?.meta || {},
-          isLoading: false,
-        });
-        return inventoryArray;
+        const data = payload?.data || [];
+        set({ inventory: data, summary: payload?.summary || {}, pagination: payload?.meta || {}, isLoading: false });
+        return data;
       }
     } catch (error) {
       set({

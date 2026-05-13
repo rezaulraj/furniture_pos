@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useStockTransferStore = create((set) => ({
   transfers: [],
+  pagination: {},
   currentTransfer: null,
   isLoading: false,
   isSubmitting: false,
@@ -21,9 +22,17 @@ export const useStockTransferStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/transfers", { params });
-      const transfers = res.data?.data || [];
-      set({ transfers, isLoading: false });
-      return transfers;
+      const payload = res.data?.data;
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        const list = isNested ? result.data : (Array.isArray(result) ? result : []);
+        set({ transfers: list, pagination: payload.meta || {}, isLoading: false });
+        return list;
+      }
+      const list = Array.isArray(payload) ? payload : (payload?.data || []);
+      set({ transfers: list, pagination: payload?.meta || {}, isLoading: false });
+      return list;
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load stock transfers"),

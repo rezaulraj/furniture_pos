@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useBranchStore = create((set, get) => ({
   branches: [],
+  summary: {},
   currentBranch: null,
   pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
   isLoading: false,
@@ -23,9 +24,23 @@ export const useBranchStore = create((set, get) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/branches", { params });
-      const { data, meta } = res.data?.data || { data: [], meta: {} };
-      set({ branches: data, pagination: meta, isLoading: false });
-      return data;
+      const payload = res.data?.data;
+
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        set({
+          branches: isNested ? result.data : (Array.isArray(result) ? result : []),
+          summary: isNested ? result.summary : {},
+          pagination: payload.meta || {},
+          isLoading: false,
+        });
+        return isNested ? result.data : result;
+      } else {
+        const data = payload?.data || [];
+        set({ branches: data, summary: payload?.summary || {}, pagination: payload?.meta || {}, isLoading: false });
+        return data;
+      }
     } catch (error) {
       const message = normalizeError(error, "Failed to load branches");
       set({ error: message, isLoading: false });

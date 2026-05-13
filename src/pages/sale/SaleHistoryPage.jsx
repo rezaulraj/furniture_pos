@@ -16,6 +16,7 @@ export default function SaleHistoryPage() {
   const {
     sales,
     currentSale,
+    summary,
     pagination,
     isLoading,
     error,
@@ -43,15 +44,10 @@ export default function SaleHistoryPage() {
 
   const filtered = sales;
 
-  const totalSales = filtered.reduce(
-    (a, s) => a + Number(s.total_amount || 0),
-    0,
-  );
-  const totalPaid = filtered.reduce(
-    (a, s) => a + Number(s.paid_amount || 0),
-    0,
-  );
-  const totalDue = filtered.reduce((a, s) => a + Number(s.due_amount || 0), 0);
+  const totalSales = summary.totalAmount || 0;
+  const totalPaid = summary.totalPaid || 0;
+  const totalDue = summary.totalDue || 0;
+  const totalInvoices = summary.count || 0;
 
   const selectedSales = filtered.filter((s) => selected.has(s.sale_id));
   const totalSelected = selectedSales.reduce(
@@ -128,7 +124,7 @@ export default function SaleHistoryPage() {
           },
           {
             label: t("invoices"),
-            value: `${filtered.length}`,
+            value: `${totalInvoices}`,
             color: T.accent,
             icon: "🧾",
           },

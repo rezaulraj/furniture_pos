@@ -1,54 +1,56 @@
 import { useEffect, useMemo, useState } from "react";
 import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
-import { useInventoryStore } from "../../store/inventoryStore";
-import { useProductStore } from "../../store/productStore";
+import { useReportStore } from "../../store/reportStore";
 import { Select } from "../../components/Input";
 import { Badge } from "../../components/Badge";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
+
+import { useBranchStore } from "../../store/branchStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function InventoryReport() {
   const { t } = useLanguageStore();
-  const { inventory, fetchInventory, isLoading } = useInventoryStore();
-  const { products, fetchProducts } = useProductStore();
+  const { fetchReport, isLoading } = useReportStore();
+  const { branches, fetchBranches } = useBranchStore();
+  const [data, setData] = useState({ summary: {}, inventory: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [storeFilter, setStoreFilter] = useState("all");
 
   useEffect(() => {
-    fetchInventory();
-    fetchProducts();
-  }, [fetchInventory, fetchProducts]);
+    fetchBranches();
+  }, [fetchBranches]);
 
-  const filtered = useMemo(() => {
-    return inventory.filter((item) => {
-      return storeFilter === "all" || String(item.store_id) === storeFilter;
-    });
-  }, [inventory, storeFilter]);
+  const loadData = async () => {
+    try {
+      const params = { page, limit: 10 };
+      if (storeFilter !== "all") params.store_id = storeFilter;
+      const res = await fetchReport("inventory", params);
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: res?.summary || {}, inventory: res?.inventory || [] });
+        setPagination(res?.meta || null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  const stats = useMemo(() => {
-    const totalItems = filtered.reduce((a, b) => a + Number(b.quantity || 0), 0);
-    // Valuation based on product purchase price if available
-    const valuation = filtered.reduce((acc, item) => {
-      const prod = products.find(p => p.product_id === item.product_id);
-      return acc + (Number(item.quantity || 0) * Number(prod?.purchase_price || 0));
-    }, 0);
-    
-    const lowStockCount = filtered.filter(item => {
-      const prod = products.find(p => p.product_id === item.product_id);
-      return Number(item.quantity) <= Number(prod?.min_stock_level || 5);
-    }).length;
+  useEffect(() => {
+    loadData();
+  }, [storeFilter, page]);
 
-    return { totalItems, valuation, lowStockCount, types: new Set(filtered.map(x => x.product_id)).size };
-  }, [filtered, products]);
+  const stats = data.summary || {};
+  const filtered = data.inventory || [];
 
   const stores = useMemo(() => {
-    const s = new Map();
-    inventory.forEach(x => {
-      if(x.store) s.set(x.store_id, x.store.store_name);
-    });
-    return Array.from(s.entries()).map(([id, name]) => ({ value: String(id), label: name }));
-  }, [inventory]);
+    return branches.map(b => ({ value: String(b.store_id), label: b.store_name }));
+  }, [branches]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -61,18 +63,18 @@ export default function InventoryReport() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label={t("totalStock")} value={stats.totalItems} icon="📦" color={T.blue} />
+        <StatCard label={t("totalStock")} value={stats.totalItems || 0} icon="📦" color={T.blue} />
         <StatCard label={t("stockValue")} value={money(stats.valuation)} icon="💎" color={T.green} />
-        <StatCard label={t("lowStockItems")} value={stats.lowStockCount} icon="⚠️" color={T.red} />
-        <StatCard label={t("productTypes")} value={stats.types} icon="🏷️" color={T.accent} />
+        <StatCard label={t("lowStockItems")} value={stats.lowStockCount || 0} icon="⚠️" color={T.red} />
+        <StatCard label={t("productTypes")} value={stats.productTypes || 0} icon="🏷️" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
         <div style={{ width: 300 }}>
-          <Select label={t("filterByStore")} value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: t("allStores") }, ...stores]} />
+          <Select label={t("filterByStore")} value={storeFilter} onChange={e => { setStoreFilter(e.target.value); setPage(1); }} options={[{ value: "all", label: t("allStores") }, ...stores]} />
         </div>
         <div style={{ flex: 1 }} />
-        <button onClick={() => fetchInventory()} style={btnStyle()}><Ic.RefreshCw /> {t("refresh")}</button>
+        <button onClick={loadData} style={btnStyle()}><Ic.RefreshCw /> {t("refresh")}</button>
       </div>
 
       <div style={{ ...card(), overflow: "hidden" }}>
@@ -91,7 +93,7 @@ export default function InventoryReport() {
                <tr><td colSpan={7} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
             ) : (
               filtered.map(item => {
-                const prod = products.find(p => p.product_id === item.product_id);
+                const prod = item.product;
                 const isLow = Number(item.quantity) <= Number(prod?.min_stock_level || 5);
                 return (
                   <tr key={item.inventory_id} style={{ borderBottom: `1px solid ${T.border}` }}>
@@ -111,6 +113,7 @@ export default function InventoryReport() {
           </tbody>
         </table>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

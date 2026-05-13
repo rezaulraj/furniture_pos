@@ -5,6 +5,7 @@ import { useReportStore } from "../../store/reportStore";
 import { useSupplierStore } from "../../store/supplierStore";
 import { Input, Select } from "../../components/Input";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -13,6 +14,8 @@ export default function SupplierProfitLossReport() {
   const { fetchReport, isLoading } = useReportStore();
   const { suppliers, fetchSuppliers } = useSupplierStore();
   const [data, setData] = useState({ summary: {}, details: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [supplierId, setSupplierId] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -27,9 +30,17 @@ export default function SupplierProfitLossReport() {
       const res = await fetchReport("suppliers/profit-loss", { 
         supplier_id: supplierId,
         startDate: dateFrom,
-        endDate: dateTo
+        endDate: dateTo,
+        page,
+        limit: 10
       });
-      setData(res || { summary: {}, details: [] });
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData(res || { summary: {}, details: [] });
+        setPagination(res?.meta || null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -37,7 +48,12 @@ export default function SupplierProfitLossReport() {
 
   useEffect(() => {
     if(supplierId) loadData();
-  }, [supplierId, dateFrom, dateTo]);
+  }, [supplierId, dateFrom, dateTo, page]);
+
+  const handleSupplierChange = (val) => {
+    setSupplierId(val);
+    setPage(1);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -54,7 +70,7 @@ export default function SupplierProfitLossReport() {
             <Select 
                 label={t("supplier")} 
                 value={supplierId} 
-                onChange={e => setSupplierId(e.target.value)} 
+                onChange={e => handleSupplierChange(e.target.value)} 
                 options={[
                     { value: "", label: t("selectSupplier") },
                     ...suppliers.map(s => ({ value: String(s.supplier_id), label: s.supplier_name }))
@@ -104,6 +120,7 @@ export default function SupplierProfitLossReport() {
                 </tbody>
                 </table>
             </div>
+            <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
           </>
       )}
     </div>

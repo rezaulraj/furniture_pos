@@ -454,10 +454,11 @@ export default function Products() {
     [categories, t],
   );
 
-  const totalProducts = pagination?.total ?? products.length;
-  const activeCount = products.filter((p) => p.is_active).length;
-  const inactiveCount = products.filter((p) => !p.is_active).length;
-  const totalValue = products.reduce((sum, p) => sum + Number(p.selling_price || 0), 0);
+  const summary = useProductStore.getState().summary || {};
+  const totalProducts = summary.count || 0;
+  const activeCount = summary.activeCount || 0;
+  const inactiveCount = summary.inactiveCount || 0;
+  const totalValue = summary.totalValue || 0;
 
   const openView = (product) => {
     setActiveProduct(product);

@@ -9,7 +9,9 @@ const normalizeError = (error, fallback) =>
 
 export const useReturnStore = create((set) => ({
   salesReturns: [],
+  salesReturnsPagination: {},
   purchaseReturns: [],
+  purchaseReturnsPagination: {},
   isLoading: false,
   isSubmitting: false,
   isUpdating: false,
@@ -17,13 +19,21 @@ export const useReturnStore = create((set) => ({
 
   clearError: () => set({ error: "" }),
 
-  fetchSalesReturns: async () => {
+  fetchSalesReturns: async (params = {}) => {
     set({ isLoading: true, error: "" });
     try {
-      const res = await api.get("/returns/sales");
-      const salesReturns = res.data?.data || [];
-      set({ salesReturns, isLoading: false });
-      return salesReturns;
+      const res = await api.get("/returns/sales", { params });
+      const payload = res.data?.data;
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        const list = isNested ? result.data : (Array.isArray(result) ? result : []);
+        set({ salesReturns: list, salesReturnsPagination: payload.meta || {}, isLoading: false });
+        return list;
+      }
+      const list = Array.isArray(payload) ? payload : [];
+      set({ salesReturns: list, isLoading: false });
+      return list;
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load sales returns"),
@@ -77,13 +87,21 @@ export const useReturnStore = create((set) => ({
     }
   },
 
-  fetchPurchaseReturns: async () => {
+  fetchPurchaseReturns: async (params = {}) => {
     set({ isLoading: true, error: "" });
     try {
-      const res = await api.get("/returns/purchases");
-      const purchaseReturns = res.data?.data || [];
-      set({ purchaseReturns, isLoading: false });
-      return purchaseReturns;
+      const res = await api.get("/returns/purchases", { params });
+      const payload = res.data?.data;
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        const list = isNested ? result.data : (Array.isArray(result) ? result : []);
+        set({ purchaseReturns: list, purchaseReturnsPagination: payload.meta || {}, isLoading: false });
+        return list;
+      }
+      const list = Array.isArray(payload) ? payload : [];
+      set({ purchaseReturns: list, isLoading: false });
+      return list;
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load purchase returns"),

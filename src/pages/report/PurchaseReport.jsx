@@ -1,51 +1,57 @@
 import { useEffect, useMemo, useState } from "react";
 import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
-import { usePurchaseStore } from "../../store/purchaseStore";
+import { useReportStore } from "../../store/reportStore";
 import { Input, Select } from "../../components/Input";
 import { StatusBadge } from "../../components/Badge";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
+import { useBranchStore } from "../../store/branchStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function PurchaseReport() {
   const { t } = useLanguageStore();
-  const { purchases, fetchPurchases, isLoading } = usePurchaseStore();
+  const { fetchReport, isLoading } = useReportStore();
+  const { branches, fetchBranches } = useBranchStore();
+  const [data, setData] = useState({ summary: {}, purchases: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [storeFilter, setStoreFilter] = useState("all");
 
   useEffect(() => {
-    fetchPurchases();
-  }, [fetchPurchases]);
+    fetchBranches();
+  }, [fetchBranches]);
 
-  const filtered = useMemo(() => {
-    return purchases.filter((p) => {
-      const pDate = new Date(p.purchase_date);
-      const from = dateFrom ? new Date(dateFrom) : null;
-      const to = dateTo ? new Date(dateTo) : null;
-      
-      const matchDate = (!from || pDate >= from) && (!to || pDate <= new Date(to.setHours(23, 59, 59, 999)));
-      const matchStore = storeFilter === "all" || String(p.store_id) === storeFilter;
-      
-      return matchDate && matchStore;
-    });
-  }, [purchases, dateFrom, dateTo, storeFilter]);
+  const loadData = async () => {
+    try {
+      const params = { page, limit: 10, startDate: dateFrom, endDate: dateTo };
+      if (storeFilter !== "all") params.store_id = storeFilter;
+      const res = await fetchReport("purchases", params);
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: res?.summary || {}, purchases: res?.purchases || [] });
+        setPagination(res?.meta || null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  const stats = useMemo(() => {
-    const total = filtered.reduce((a, b) => a + Number(b.total_amount || 0), 0);
-    const paid = filtered.reduce((a, b) => a + Number(b.paid_amount || 0), 0);
-    const due = filtered.reduce((a, b) => a + Number(b.due_amount || 0), 0);
-    return { total, paid, due, count: filtered.length };
-  }, [filtered]);
+  useEffect(() => {
+    loadData();
+  }, [dateFrom, dateTo, storeFilter, page]);
+
+  const stats = data.summary || {};
+  const filtered = data.purchases || [];
 
   const stores = useMemo(() => {
-    const s = new Map();
-    purchases.forEach(x => {
-      if(x.store) s.set(x.store_id, x.store.store_name);
-    });
-    return Array.from(s.entries()).map(([id, name]) => ({ value: String(id), label: name }));
-  }, [purchases]);
+    return branches.map(b => ({ value: String(b.store_id), label: b.store_name }));
+  }, [branches]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -58,15 +64,15 @@ export default function PurchaseReport() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label={t("totalPurchases")} value={money(stats.total)} icon="🛒" color={T.blue} />
-        <StatCard label={t("paidToSuppliers")} value={money(stats.paid)} icon="💸" color={T.green} />
-        <StatCard label={t("outstandingDebt")} value={money(stats.due)} icon="🛑" color={T.red} />
-        <StatCard label={t("totalOrders")} value={stats.count} icon="📦" color={T.accent} />
+        <StatCard label={t("totalPurchases")} value={money(stats.totalAmount)} icon="🛒" color={T.blue} />
+        <StatCard label={t("paidToSuppliers")} value={money(stats.totalPaid)} icon="💸" color={T.green} />
+        <StatCard label={t("outstandingDebt")} value={money(stats.totalDue)} icon="🛑" color={T.red} />
+        <StatCard label={t("totalOrders")} value={stats.count || 0} icon="📦" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
         <div style={{ flex: 1 }}>
-          <Select label={t("store")} value={storeFilter} onChange={e => setStoreFilter(e.target.value)} options={[{ value: "all", label: t("allStores") }, ...stores]} />
+          <Select label={t("store")} value={storeFilter} onChange={e => { setStoreFilter(e.target.value); setPage(1); }} options={[{ value: "all", label: t("allStores") }, ...stores]} />
         </div>
         <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
         <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
@@ -103,6 +109,7 @@ export default function PurchaseReport() {
           </tbody>
         </table>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

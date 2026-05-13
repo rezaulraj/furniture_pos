@@ -4,6 +4,7 @@ import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -11,13 +12,22 @@ export default function RefundReport() {
   const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, salesReturns: [], purchaseReturns: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
 
   const loadData = async () => {
     try {
-      const res = await fetchReport("refunds", { startDate: dateFrom, endDate: dateTo });
-      setData(res || { summary: {}, salesReturns: [], purchaseReturns: [] });
+      const res = await fetchReport("refunds", { startDate: dateFrom, endDate: dateTo, page, limit: 10 });
+      // The new response structure is { data: { summary, salesReturns, purchaseReturns }, meta }
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: {}, salesReturns: [], purchaseReturns: [] });
+        setPagination(null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -25,7 +35,7 @@ export default function RefundReport() {
 
   useEffect(() => {
     loadData();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, page]);
 
   const stats = data.summary || {};
 
@@ -111,6 +121,8 @@ export default function RefundReport() {
             </table>
         </div>
       </div>
+
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

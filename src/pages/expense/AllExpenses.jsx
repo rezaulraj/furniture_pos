@@ -36,13 +36,14 @@ export default function AllExpenses() {
 
   const filtered = expenses;
 
+  const summary = useExpenseStore.getState().summary || {};
   const stats = useMemo(() => {
     return {
-      total: filtered.reduce((a, b) => a + Number(b.amount || 0), 0),
-      pending: filtered.filter((e) => e.status === "pending").length,
-      paid: filtered.filter((e) => e.status === "paid").length,
+      total: summary.totalAmount || 0,
+      pending: summary.pending || 0,
+      paid: summary.paid || 0,
     };
-  }, [filtered]);
+  }, [summary]);
 
   const handleStatusUpdate = async (id, status) => {
     try {

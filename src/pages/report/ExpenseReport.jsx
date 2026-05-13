@@ -1,56 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
 import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
-import { useExpenseStore } from "../../store/expenseStore";
+import { useReportStore } from "../../store/reportStore";
 import { Input, Select } from "../../components/Input";
 import { Badge } from "../../components/Badge";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function ExpenseReport() {
   const { t } = useLanguageStore();
-  const { expenses, fetchExpenses, isLoading } = useExpenseStore();
+  const { fetchReport, isLoading } = useReportStore();
+  const [data, setData] = useState({ summary: {}, expenses: [], categoryWise: {} });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
+  const loadData = async () => {
+    try {
+      const params = { page, limit: 10, startDate: dateFrom, endDate: dateTo };
+      if (categoryFilter !== "all") params.category = categoryFilter;
+      const res = await fetchReport("expenses", params);
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: res?.summary || {}, expenses: res?.expenses || [], categoryWise: res?.categoryWise || {} });
+        setPagination(res?.meta || null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  const filtered = useMemo(() => {
-    return expenses.filter((e) => {
-      const eDate = new Date(e.expense_date);
-      const from = dateFrom ? new Date(dateFrom) : null;
-      const to = dateTo ? new Date(dateTo) : null;
-      
-      const matchDate = (!from || eDate >= from) && (!to || eDate <= new Date(to.setHours(23, 59, 59, 999)));
-      const matchCategory = categoryFilter === "all" || e.category === categoryFilter;
-      
-      return matchDate && matchCategory;
-    });
-  }, [expenses, dateFrom, dateTo, categoryFilter]);
+  useEffect(() => {
+    loadData();
+  }, [dateFrom, dateTo, categoryFilter, page]);
 
   const stats = useMemo(() => {
-    const total = filtered.reduce((a, b) => a + Number(b.amount || 0), 0);
-    const count = filtered.length;
+    const s = data.summary || {};
+    const count = s.count || 0;
+    const total = s.totalAmount || 0;
     const avg = count > 0 ? total / count : 0;
     
-    const byCategory = filtered.reduce((acc, curr) => {
-        acc[curr.category] = (acc[curr.category] || 0) + Number(curr.amount);
-        return acc;
-    }, {});
-
+    const byCategory = data.categoryWise || {};
     const topCategory = Object.entries(byCategory).sort((a, b) => b[1] - a[1])[0]?.[0] || "None";
 
     return { total, count, avg, topCategory };
-  }, [filtered]);
+  }, [data]);
 
   const categories = useMemo(() => {
-    const c = new Set(expenses.map(x => x.category));
-    return Array.from(c).map(cat => ({ value: cat, label: cat }));
-  }, [expenses]);
+    const cats = Object.keys(data.categoryWise || {});
+    return cats.map(cat => ({ value: cat, label: cat }));
+  }, [data.categoryWise]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -71,10 +76,10 @@ export default function ExpenseReport() {
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
         <div style={{ flex: 1 }}>
-          <Select label={t("category")} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} options={[{ value: "all", label: t("allCategories") }, ...categories]} />
+          <Select label={t("category")} value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} options={[{ value: "all", label: t("allCategories") }, ...categories]} />
         </div>
-        <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-        <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        <Input label={t("from")} type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
+        <Input label={t("to")} type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
       </div>
 
       <div style={{ ...card(), overflow: "hidden" }}>
@@ -89,23 +94,24 @@ export default function ExpenseReport() {
           <tbody>
             {isLoading ? (
                <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("loading")}...</td></tr>
-            ) : filtered.length === 0 ? (
+            ) : data.expenses.length === 0 ? (
                <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: T.textSub }}>{t("noRecordsFound")}</td></tr>
             ) : (
-              filtered.map(e => (
+              data.expenses.map(e => (
                 <tr key={e.expense_id} style={{ borderBottom: `1px solid ${T.border}` }}>
                   <td style={{ padding: "12px 15px", color: T.textSub, fontSize: 12 }}>{new Date(e.expense_date).toLocaleDateString()}</td>
-                  <td style={{ padding: "12px 15px" }}><Badge color="purple" small>{e.category}</Badge></td>
-                  <td style={{ padding: "12px 15px", color: T.text }}>{e.description}</td>
+                  <td style={{ padding: "12px 15px" }}><Badge color="purple" small>{e.category || e.expense_type || "General"}</Badge></td>
+                  <td style={{ padding: "12px 15px", color: T.text }}>{e.description || e.expense_type}</td>
                   <td style={{ padding: "12px 15px", color: T.textSub }}>{e.store?.store_name || t("general")}</td>
                   <td style={{ padding: "12px 15px", color: T.red, fontWeight: 700 }}>{money(e.amount)}</td>
-                  <td style={{ padding: "12px 15px", color: T.textMut, fontSize: 11 }}>{e.reference_no || "—"}</td>
+                  <td style={{ padding: "12px 15px", color: T.textMut, fontSize: 11 }}>{e.payments?.[0]?.bank_reference_no || "—"}</td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

@@ -4,20 +4,29 @@ import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function BankPaymentReport() {
   const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
-  const [data, setData] = useState({ salePayments: [], purchasePayments: [], expensePayments: [], installmentPayments: [] });
+  const [data, setData] = useState({ summary: {}, details: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
 
   const loadData = async () => {
     try {
-      const res = await fetchReport("payments/bank", { startDate: dateFrom, endDate: dateTo });
-      setData(res || { salePayments: [], purchasePayments: [], expensePayments: [], installmentPayments: [] });
+      const res = await fetchReport("payments/bank", { startDate: dateFrom, endDate: dateTo, page, limit: 10 });
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: res?.summary || {}, details: res?.details || [] });
+        setPagination(res?.meta || null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -25,14 +34,10 @@ export default function BankPaymentReport() {
 
   useEffect(() => {
     loadData();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, page]);
 
-  const allPayments = [
-    ...(data.salePayments?.map(p => ({ ...p, type: t("sale"), ref: p.sale?.invoice_number })) || []),
-    ...(data.purchasePayments?.map(p => ({ ...p, type: t("purchase"), ref: p.purchase?.purchase_reference })) || []),
-    ...(data.expensePayments?.map(p => ({ ...p, type: t("expense"), ref: p.expense?.expense_name })) || []),
-    ...(data.installmentPayments?.map(p => ({ ...p, type: t("installment"), ref: p.installment?.sale?.invoice_number })) || []),
-  ].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
+  const allPayments = data.details || [];
+  const stats = data.summary || {};
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -48,6 +53,10 @@ export default function BankPaymentReport() {
         <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
         <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: 16 }}>
+        <StatCard label={t("totalBankPayments")} value={money(stats.totalAmount)} icon="🏦" color={T.accent} />
       </div>
 
       <div style={{ ...card(), overflow: "hidden" }}>
@@ -68,7 +77,7 @@ export default function BankPaymentReport() {
               allPayments.map((p, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>
                   <td style={{ padding: "12px 15px", color: T.textSub, fontSize: 12 }}>{new Date(p.payment_date).toLocaleDateString()}</td>
-                  <td style={{ padding: "12px 15px", color: T.text }}>{p.type}</td>
+                  <td style={{ padding: "12px 15px", color: T.text }}>{t(p.type)}</td>
                   <td style={{ padding: "12px 15px", color: T.accent, fontWeight: 700 }}>{p.ref}</td>
                   <td style={{ padding: "12px 15px", color: T.textSub }}>{p.bank_name || p.payment_note || "-"}</td>
                   <td style={{ padding: "12px 15px", color: T.text, fontWeight: 700 }}>{money(p.amount)}</td>
@@ -77,6 +86,21 @@ export default function BankPaymentReport() {
             )}
           </tbody>
         </table>
+      </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, color }) {
+  return (
+    <div style={{ ...card(), padding: 20, borderLeft: `4px solid ${color}`, maxWidth: 300 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <p style={{ color: T.textSub, fontSize: 11, fontWeight: 800, margin: 0 }}>{label.toUpperCase()}</p>
+          <h2 style={{ color: T.text, margin: "8px 0 0", fontSize: 22, fontWeight: 900 }}>{value}</h2>
+        </div>
+        <span style={{ fontSize: 24 }}>{icon}</span>
       </div>
     </div>
   );

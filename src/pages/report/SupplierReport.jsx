@@ -3,6 +3,7 @@ import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -10,11 +11,19 @@ export default function SupplierReport() {
   const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
 
   const loadData = async () => {
     try {
-      const res = await fetchReport("suppliers");
-      setData(res || []);
+      const res = await fetchReport("suppliers", { page, limit: 10 });
+      if (res && Array.isArray(res.data)) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData(res || []);
+        setPagination(null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -22,7 +31,7 @@ export default function SupplierReport() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -63,6 +72,7 @@ export default function SupplierReport() {
           </tbody>
         </table>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

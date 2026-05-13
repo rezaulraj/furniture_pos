@@ -1,51 +1,56 @@
 import { useEffect, useMemo, useState } from "react";
 import { card, T } from "../../theme/colors";
 import { Ic } from "../../components/Icons";
-import { useSaleStore } from "../../store/saleStore";
+import { useReportStore } from "../../store/reportStore";
 import { Input, Select } from "../../components/Input";
 import { Badge, StatusBadge } from "../../components/Badge";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
+import { useBranchStore } from "../../store/branchStore";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
 export default function SalesReport() {
   const { t } = useLanguageStore();
-  const { sales, fetchSales, isLoading } = useSaleStore();
+  const { fetchReport, isLoading } = useReportStore();
+  const { branches, fetchBranches } = useBranchStore();
+  const [data, setData] = useState({ summary: {}, sales: [] });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [storeFilter, setStoreFilter] = useState("all");
 
+  useEffect(() => { fetchBranches(); }, [fetchBranches]);
+
+  const loadData = async () => {
+    try {
+      const params = { page, limit: 10, startDate: dateFrom, endDate: dateTo };
+      if (storeFilter !== "all") params.store_id = storeFilter;
+      const res = await fetchReport("sales", params);
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        // Fallback for cases where standard wrapper isn't used
+        setData({ summary: res?.summary || {}, sales: res?.sales || [] });
+        setPagination(res?.meta || null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
-    fetchSales();
-  }, [fetchSales]);
+    loadData();
+  }, [dateFrom, dateTo, storeFilter, page]);
 
-  const filtered = useMemo(() => {
-    return sales.filter((s) => {
-      const saleDate = new Date(s.sale_date);
-      const from = dateFrom ? new Date(dateFrom) : null;
-      const to = dateTo ? new Date(dateTo) : null;
-      
-      const matchDate = (!from || saleDate >= from) && (!to || saleDate <= new Date(to.setHours(23, 59, 59, 999)));
-      const matchStore = storeFilter === "all" || String(s.store_id) === storeFilter;
-      
-      return matchDate && matchStore;
-    });
-  }, [sales, dateFrom, dateTo, storeFilter]);
-
-  const stats = useMemo(() => {
-    const total = filtered.reduce((a, b) => a + Number(b.total_amount || 0), 0);
-    const paid = filtered.reduce((a, b) => a + Number(b.paid_amount || 0), 0);
-    const due = filtered.reduce((a, b) => a + Number(b.due_amount || 0), 0);
-    return { total, paid, due, count: filtered.length };
-  }, [filtered]);
+  const stats = data.summary || { totalAmount: 0, totalPaid: 0, totalDue: 0 };
+  const filtered = data.sales || [];
 
   const stores = useMemo(() => {
-    const s = new Map();
-    sales.forEach(x => {
-      if(x.store) s.set(x.store_id, x.store.store_name);
-    });
-    return Array.from(s.entries()).map(([id, name]) => ({ value: String(id), label: name }));
-  }, [sales]);
+    return branches.map(b => ({ value: String(b.store_id), label: b.store_name }));
+  }, [branches]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -58,10 +63,10 @@ export default function SalesReport() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <StatCard label={t("totalRevenue")} value={money(stats.total)} icon="💰" color={T.green} />
-        <StatCard label={t("totalReceived")} value={money(stats.paid)} icon="📥" color={T.blue} />
-        <StatCard label={t("totalOutstanding")} value={money(stats.due)} icon="⏳" color={T.red} />
-        <StatCard label={t("totalInvoices")} value={stats.count} icon="🧾" color={T.accent} />
+        <StatCard label={t("totalRevenue")} value={money(stats.totalAmount)} icon="💰" color={T.green} />
+        <StatCard label={t("totalReceived")} value={money(stats.totalPaid)} icon="📥" color={T.blue} />
+        <StatCard label={t("totalOutstanding")} value={money(stats.totalDue)} icon="⏳" color={T.red} />
+        <StatCard label={t("totalInvoices")} value={stats.count || 0} icon="🧾" color={T.accent} />
       </div>
 
       <div style={{ ...card(), padding: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
@@ -70,7 +75,7 @@ export default function SalesReport() {
         </div>
         <Input label={t("from")} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
         <Input label={t("to")} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
-        <Btn onClick={() => fetchSales()} variant="ghost"><Ic.RefreshCw /></Btn>
+        <Btn onClick={loadData} variant="ghost"><Ic.RefreshCw /></Btn>
       </div>
 
       <div style={{ ...card(), overflow: "hidden" }}>
@@ -104,6 +109,7 @@ export default function SalesReport() {
           </tbody>
         </table>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

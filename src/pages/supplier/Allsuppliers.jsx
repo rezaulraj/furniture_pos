@@ -663,9 +663,10 @@ export default function AllSuppliers() {
     } catch {}
   };
 
-  const total = suppliers.length;
-  const activeCount = suppliers.filter((s) => s.is_active).length;
-  const inactiveCount = suppliers.filter((s) => !s.is_active).length;
+  const summary = useSupplierStore.getState().summary || {};
+  const total = summary.count || 0;
+  const activeCount = summary.activeCount || 0;
+  const inactiveCount = summary.inactiveCount || 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

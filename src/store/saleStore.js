@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useSaleStore = create((set) => ({
   sales: [],
+  summary: {},
   pagination: {},
   currentSale: null,
   isLoading: false,
@@ -27,17 +28,21 @@ export const useSaleStore = create((set) => ({
       const payload = body?.data;
       
       if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        const result = payload.data;
+        const isNested = result && typeof result === 'object' && 'data' in result;
+        
         set({
-          sales: payload.data || [],
+          sales: isNested ? result.data : (Array.isArray(result) ? result : []),
+          summary: isNested ? result.summary : {},
           pagination: payload.meta || {},
           isLoading: false,
         });
-        return payload.data;
+        return isNested ? result.data : result;
       } else {
-        // Fallback for legacy or direct array responses
         const salesArray = Array.isArray(payload) ? payload : (payload?.data || []);
         set({
           sales: salesArray,
+          summary: payload?.summary || {},
           pagination: payload?.meta || {},
           isLoading: false,
         });

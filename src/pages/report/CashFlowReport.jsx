@@ -4,6 +4,7 @@ import { Ic } from "../../components/Icons";
 import { useReportStore } from "../../store/reportStore";
 import { Input } from "../../components/Input";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const money = (v) => `৳${Number(v || 0).toLocaleString()}`;
 
@@ -11,13 +12,21 @@ export default function CashFlowReport() {
   const { t } = useLanguageStore();
   const { fetchReport, isLoading } = useReportStore();
   const [data, setData] = useState({ summary: {}, details: {} });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
 
   const loadData = async () => {
     try {
-      const res = await fetchReport("cash-flow", { startDate: dateFrom, endDate: dateTo });
-      setData(res || { summary: {}, details: {} });
+      const res = await fetchReport("cash-flow", { startDate: dateFrom, endDate: dateTo, page, limit: 10 });
+      if (res && res.data) {
+        setData(res.data);
+        setPagination(res.meta);
+      } else {
+        setData({ summary: res?.summary || {}, details: res?.details || {} });
+        setPagination(res?.meta || null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -25,7 +34,7 @@ export default function CashFlowReport() {
 
   useEffect(() => {
     loadData();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, page]);
 
   const stats = data.summary || {};
 
@@ -63,6 +72,7 @@ export default function CashFlowReport() {
                     <span style={{ color: T.textSub }}>{t("installmentPayments")}</span>
                     <span style={{ color: T.text, fontWeight: 700 }}>{money(data.details?.installmentPayments?.reduce((a, b) => a + Number(b.amount), 0))}</span>
                 </div>
+                <p style={{ fontSize: 10, color: T.textMut, margin: "5px 0 0" }}>* {t("showingCurrentPageOnly")}</p>
             </div>
         </div>
         <div style={{ ...card(), padding: 20 }}>
@@ -76,9 +86,11 @@ export default function CashFlowReport() {
                     <span style={{ color: T.textSub }}>{t("expensePayments")}</span>
                     <span style={{ color: T.text, fontWeight: 700 }}>{money(data.details?.expensePayments?.reduce((a, b) => a + Number(b.amount), 0))}</span>
                 </div>
+                <p style={{ fontSize: 10, color: T.textMut, margin: "5px 0 0" }}>* {t("showingCurrentPageOnly")}</p>
             </div>
         </div>
       </div>
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
     </div>
   );
 }

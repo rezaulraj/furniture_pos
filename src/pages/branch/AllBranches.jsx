@@ -4,6 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useBranchStore } from "../../store/branchStore";
+import { Pagination } from "../../components/Pagination";
 
 const EMPTY_FORM = {
   store_name: "",
@@ -432,6 +433,7 @@ function DeleteModal({ branch, loading, onClose, onConfirm }) {
 export default function AllBranches() {
   const {
     branches,
+    pagination,
     isLoading,
     isSubmitting,
     isDeleting,
@@ -445,31 +447,36 @@ export default function AllBranches() {
 
   const [search, setSearch] = useState("");
   const [statusF, setStatusF] = useState("all");
+  const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState("grid");
   const [modal, setModal] = useState(null);
   const [activeBranch, setActiveBranch] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    fetchBranches();
+    const params = { page, limit: 10 };
+    if (statusF !== "all") params.is_active = statusF === "active";
+    fetchBranches(params);
     clearError();
-  }, [fetchBranches, clearError]);
+  }, [page, statusF]);
 
+  const handleStatusChange = (val) => {
+    setStatusF(val);
+    setPage(1);
+  };
+
+  // Client-side search filter on current page data
   const filtered = useMemo(() => {
-    return branches.filter((b) => {
-      const matchesSearch =
-        b.store_name?.toLowerCase().includes(search.toLowerCase()) ||
-        (b.phone || "").toLowerCase().includes(search.toLowerCase()) ||
-        (b.email || "").toLowerCase().includes(search.toLowerCase()) ||
-        (b.address || "").toLowerCase().includes(search.toLowerCase());
-
-      const matchesStatus =
-        statusF === "all" ||
-        (statusF === "active" ? b.is_active : !b.is_active);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [branches, search, statusF]);
+    if (!search.trim()) return branches;
+    const q = search.toLowerCase();
+    return branches.filter((b) =>
+      b.store_name?.toLowerCase().includes(q) ||
+      (b.phone || "").toLowerCase().includes(q) ||
+      (b.email || "").toLowerCase().includes(q) ||
+      (b.address || "").toLowerCase().includes(q)
+    );
+  }, [branches, search]);
 
   const openCreate = () => {
     setModal("create");
@@ -584,7 +591,7 @@ export default function AllBranches() {
     }
   };
 
-  const total = branches.length;
+  const total = pagination?.total ?? branches.length;
   const active = branches.filter((b) => b.is_active).length;
   const inactive = branches.filter((b) => !b.is_active).length;
 
@@ -722,30 +729,43 @@ export default function AllBranches() {
             ["all", "All"],
             ["active", "Active"],
             ["inactive", "Inactive"],
-          ].map(([value, label]) => (
+          ].map(([val, label]) => (
             <button
-              key={value}
-              onClick={() => setStatusF(value)}
-              style={{
-                height: 38,
-                padding: "0 14px",
-                borderRadius: 999,
-                border: `1px solid ${
-                  statusF === value ? "transparent" : T.border
-                }`,
-                background:
-                  statusF === value
-                    ? `linear-gradient(135deg, ${T.accent}, ${T.accent})`
-                    : T.bg3,
-                color: statusF === value ? "#fff" : T.textSub,
-                fontWeight: 800,
-                fontSize: 12,
-                cursor: "pointer",
+              key={val}
+              onClick={() => {
+                setStatusF(val);
+                setPage(1);
               }}
+              style={tabBtnStyle(statusF === val)}
             >
               {label}
             </button>
           ))}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            background: T.bg3,
+            padding: 4,
+            borderRadius: 12,
+            border: `1px solid ${T.border}`,
+            marginLeft: "auto",
+          }}
+        >
+          <button
+            onClick={() => setViewMode("grid")}
+            style={viewBtnStyle(viewMode === "grid")}
+          >
+            <Ic.LayoutGrid size={18} />
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            style={viewBtnStyle(viewMode === "table")}
+          >
+            <Ic.List size={18} />
+          </button>
         </div>
 
         <Btn onClick={openCreate}>
@@ -768,146 +788,255 @@ export default function AllBranches() {
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))",
-          gap: 14,
-        }}
-      >
-        {isLoading ? (
-          [1, 2, 3].map((i) => (
+      {viewMode === "grid" && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))",
+            gap: 14,
+          }}
+        >
+          {isLoading ? (
+            [1, 2, 3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  ...card(),
+                  minHeight: 220,
+                  opacity: 0.6,
+                }}
+              />
+            ))
+          ) : filtered.length === 0 ? (
             <div
-              key={i}
               style={{
                 ...card(),
-                minHeight: 220,
-                opacity: 0.6,
-              }}
-            />
-          ))
-        ) : filtered.length === 0 ? (
-          <div
-            style={{
-              ...card(),
-              padding: 40,
-              gridColumn: "1 / -1",
-              textAlign: "center",
-            }}
-          >
-            <div style={{ fontSize: 48, marginBottom: 10 }}>🏪</div>
-            <p
-              style={{
-                color: T.textSub,
-                fontSize: 14,
-                fontWeight: 700,
-                margin: 0,
+                padding: 40,
+                gridColumn: "1 / -1",
+                textAlign: "center",
               }}
             >
-              No branches found
-            </p>
-            <Btn onClick={openCreate} style={{ marginTop: 14 }}>
-              <Ic.Plus /> Add Branch
-            </Btn>
-          </div>
-        ) : (
-          filtered.map((branch) => (
-            <div
-              key={branch.store_id}
-              style={{
-                ...card(),
-                padding: 18,
-                borderTop: `3px solid ${
-                  branch.is_active ? T.accent : T.textMut
-                }`,
-                opacity: branch.is_active ? 1 : 0.7,
-              }}
-            >
+              <div style={{ fontSize: 48, marginBottom: 14 }}>🏪</div>
+              <p style={{ color: T.textSub, fontWeight: 700, margin: "0 0 16px" }}>
+                No branches found.
+              </p>
+              <Btn onClick={openCreate} style={{ margin: "0 auto" }}>
+                <Ic.Plus /> Add Branch
+              </Btn>
+            </div>
+          ) : (
+            filtered.map((b) => (
               <div
+                key={b.store_id}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: 12,
-                  gap: 12,
+                  ...card(),
+                  padding: 20,
+                  borderTop: `4px solid ${b.is_active ? T.accent : T.textMut}`,
                 }}
               >
-                <div>
-                  <p
-                    style={{
-                      color: T.text,
-                      fontWeight: 900,
-                      fontSize: 15,
-                      margin: "0 0 4px",
-                    }}
-                  >
-                    {branch.store_name}
-                  </p>
-                  <p
-                    style={{
-                      color: T.textMut,
-                      fontSize: 10.5,
-                      margin: 0,
-                    }}
-                  >
-                    Branch ID: {branch.store_id}
-                  </p>
-                </div>
-
-                <Badge color={branch.is_active ? "green" : "red"} small>
-                  {branch.is_active ? "ACTIVE" : "INACTIVE"}
-                </Badge>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  marginBottom: 14,
-                }}
-              >
-                <InfoLine label="Address" value={branch.address || "—"} />
-                <InfoLine label="Phone" value={branch.phone || "—"} />
-                <InfoLine label="Email" value={branch.email || "—"} />
-              </div>
-
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => openView(branch)}
-                  style={actionBtn("rgba(34,197,94,0.10)", T.green)}
-                >
-                  <Ic.Eye /> View
-                </button>
-
-                <button
-                  onClick={() => openEdit(branch)}
-                  style={actionBtn("rgba(172,82,8,0.12)", T.accent)}
-                >
-                  <Ic.Edit /> Edit
-                </button>
-
-                <button
-                  onClick={() => openDelete(branch)}
+                <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    border: "1px solid rgba(248,113,113,0.2)",
-                    background: "rgba(248,113,113,0.1)",
-                    color: T.red,
-                    cursor: "pointer",
-                    display: "grid",
-                    placeItems: "center",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
                   }}
                 >
-                  <Ic.Trash />
-                </button>
+                  <div>
+                    <h3
+                      style={{
+                        color: T.text,
+                        fontWeight: 900,
+                        fontSize: 16,
+                        margin: 0,
+                      }}
+                    >
+                      {b.store_name}
+                    </h3>
+                    <p style={{ color: T.textMut, fontSize: 10.5, margin: "4px 0 0" }}>
+                      ID: {b.store_id}
+                    </p>
+                  </div>
+                  <Badge color={b.is_active ? "green" : "red"} small>
+                    {b.is_active ? "ACTIVE" : "INACTIVE"}
+                  </Badge>
+                </div>
+
+                <div
+                  style={{
+                    margin: "18px 0",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}
+                >
+                  <InfoItem icon={<Ic.Phone size={14} />} value={b.phone || "—"} />
+                  <InfoItem icon={<Ic.Mail size={14} />} value={b.email || "—"} />
+                  <InfoItem
+                    icon={<Ic.MapPin size={14} />}
+                    value={b.address || "—"}
+                  />
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    paddingTop: 16,
+                    borderTop: `1px solid ${T.border}`,
+                  }}
+                >
+                  <button
+                    onClick={() => openView(b)}
+                    style={actionBtnStyle("rgba(34,197,94,0.1)", T.green)}
+                  >
+                    <Ic.Eye /> View
+                  </button>
+                  <button
+                    onClick={() => openEdit(b)}
+                    style={actionBtnStyle("rgba(172,82,8,0.12)", T.accent)}
+                  >
+                    <Ic.Edit /> Edit
+                  </button>
+                  <button
+                    onClick={() => openDelete(b)}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: "rgba(239,68,68,0.1)",
+                      border: "1px solid rgba(239,68,68,0.2)",
+                      color: T.red,
+                      cursor: "pointer",
+                      display: "grid",
+                      placeItems: "center",
+                    }}
+                  >
+                    <Ic.Trash />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {viewMode === "table" && (
+        <div style={{ ...card(), overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: 800,
+              }}
+            >
+              <thead style={{ background: T.bg2 }}>
+                <tr>
+                  {[
+                    "Branch",
+                    "Address",
+                    "Contact",
+                    "Status",
+                    "Actions",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "12px 14px",
+                        textAlign: "left",
+                        color: T.textMut,
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        letterSpacing: "0.06em",
+                        borderBottom: `1px solid ${T.border}`,
+                      }}
+                    >
+                      {h.toUpperCase()}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{ padding: 40, textAlign: "center", color: T.textSub }}
+                    >
+                      Loading...
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{ padding: 40, textAlign: "center", color: T.textSub }}
+                    >
+                      No branches found.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((b) => (
+                    <tr
+                      key={b.store_id}
+                      style={{ borderBottom: `1px solid ${T.border}` }}
+                    >
+                      <td style={{ padding: "12px 14px" }}>
+                        <p style={{ color: T.text, fontWeight: 700, fontSize: 13, margin: 0 }}>
+                          {b.store_name}
+                        </p>
+                        <p style={{ color: T.textMut, fontSize: 10, margin: "2px 0 0" }}>
+                          ID: {b.store_id}
+                        </p>
+                      </td>
+                      <td style={{ padding: "12px 14px", color: T.textSub, fontSize: 12, maxWidth: 240 }}>
+                        {b.address || "—"}
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <p style={{ color: T.textSub, fontSize: 12, margin: 0 }}>
+                          {b.phone || "—"}
+                        </p>
+                        <p style={{ color: T.textMut, fontSize: 10.5, margin: "2px 0 0" }}>
+                          {b.email || "—"}
+                        </p>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <Badge color={b.is_active ? "green" : "red"} small>
+                          {b.is_active ? "ACTIVE" : "INACTIVE"}
+                        </Badge>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            onClick={() => openView(b)}
+                            style={tableActionBtn(T.green, "rgba(34,197,94,0.1)")}
+                          >
+                            <Ic.Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => openEdit(b)}
+                            style={tableActionBtn(T.accent, "rgba(172,82,8,0.12)")}
+                          >
+                            <Ic.Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => openDelete(b)}
+                            style={tableActionBtn(T.red, "rgba(248,113,113,0.1)")}
+                          >
+                            <Ic.Trash size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
 
       {(modal === "create" || modal === "edit" || modal === "view") && (
         <BranchModal
@@ -981,7 +1110,7 @@ function InfoLine({ label, value }) {
   );
 }
 
-function actionBtn(bg, color) {
+function actionBtnStyle(bg, color) {
   return {
     flex: 1,
     height: 36,
@@ -996,6 +1125,36 @@ function actionBtn(bg, color) {
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
+  };
+}
+
+function viewBtnStyle(active) {
+  return {
+    width: 36,
+    height: 36,
+    borderRadius: 9,
+    border: "none",
+    background: active ? T.accent : "transparent",
+    color: active ? "#fff" : T.textMut,
+    cursor: "pointer",
+    display: "grid",
+    placeItems: "center",
+    transition: "all .2s",
+  };
+}
+
+function tableActionBtn(color, bg) {
+  return {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    border: `1px solid ${T.border}`,
+    background: bg,
+    color,
+    cursor: "pointer",
+    display: "grid",
+    placeItems: "center",
+    transition: "all .2s",
   };
 }
 
@@ -1029,5 +1188,19 @@ function textareaStyle(readOnly = false) {
     fontFamily: "inherit",
     lineHeight: 1.6,
     cursor: readOnly ? "default" : "text",
+  };
+}
+function tabBtnStyle(active) {
+  return {
+    height: 34,
+    padding: "0 14px",
+    borderRadius: 10,
+    border: `1px solid ${active ? T.accent : T.border}`,
+    background: active ? `${T.accent}15` : T.bg3,
+    color: active ? T.accent : T.textSub,
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all .2s",
   };
 }

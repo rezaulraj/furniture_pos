@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useExpenseStore = create((set) => ({
   expenses: [],
+  pagination: {},
   isLoading: false,
   isSubmitting: false,
   isDeleting: false,
@@ -21,9 +22,25 @@ export const useExpenseStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/expenses", { params });
-      const expenses = res.data?.data || [];
-      set({ expenses, isLoading: false });
-      return expenses;
+      const body = res.data;
+      const payload = body?.data;
+
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        set({
+          expenses: payload.data || [],
+          pagination: payload.meta || {},
+          isLoading: false,
+        });
+        return payload.data;
+      } else {
+        const expensesArray = Array.isArray(payload) ? payload : (payload?.data || []);
+        set({
+          expenses: expensesArray,
+          pagination: payload?.meta || {},
+          isLoading: false,
+        });
+        return expensesArray;
+      }
     } catch (error) {
       const message = normalizeError(error, "Failed to load expenses");
       set({ error: message, isLoading: false });

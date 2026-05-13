@@ -5,6 +5,7 @@ import { Btn } from "../../components/Button";
 import { Ic } from "../../components/Icons";
 import { useSupplierStore } from "../../store/supplierStore";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const EMPTY_FORM = {
   supplier_name: "",
@@ -491,6 +492,7 @@ export default function AllSuppliers() {
   const { t, lang } = useLanguageStore();
   const {
     suppliers,
+    pagination,
     isLoading,
     isSubmitting,
     isDeleting,
@@ -505,31 +507,37 @@ export default function AllSuppliers() {
 
   const [search, setSearch] = useState("");
   const [statusF, setStatusF] = useState("all");
+  const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState("grid");
   const [modal, setModal] = useState(null);
   const [activeSupplier, setActiveSupplier] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    fetchSuppliers();
+    const params = { page, limit: 10 };
+    if (statusF !== "all") params.is_active = statusF === "active";
+    fetchSuppliers(params);
     clearError();
-  }, [fetchSuppliers, clearError]);
+  }, [page, statusF]);
 
+  // Reset to page 1 when filter changes
+  const handleStatusChange = (val) => {
+    setStatusF(val);
+    setPage(1);
+  };
+
+  // Client-side search filter on current page data
   const filtered = useMemo(() => {
-    return suppliers.filter((s) => {
-      const matchesSearch =
-        s.supplier_name?.toLowerCase().includes(search.toLowerCase()) ||
-        (s.contact_person || "").toLowerCase().includes(search.toLowerCase()) ||
-        (s.phone || "").toLowerCase().includes(search.toLowerCase()) ||
-        (s.email || "").toLowerCase().includes(search.toLowerCase());
-
-      const matchesStatus =
-        statusF === "all" ||
-        (statusF === "active" ? s.is_active : !s.is_active);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [suppliers, search, statusF]);
+    if (!search.trim()) return suppliers;
+    const q = search.toLowerCase();
+    return suppliers.filter((s) =>
+      s.supplier_name?.toLowerCase().includes(q) ||
+      (s.contact_person || "").toLowerCase().includes(q) ||
+      (s.phone || "").toLowerCase().includes(q) ||
+      (s.email || "").toLowerCase().includes(q)
+    );
+  }, [suppliers, search]);
 
   const openCreate = () => {
     setModal("create");
@@ -793,28 +801,40 @@ export default function AllSuppliers() {
             ["all", t("all")],
             ["active", t("active")],
             ["inactive", t("inactive")],
-          ].map(([value, label]) => (
+          ].map(([val, label]) => (
             <button
-              key={value}
-              onClick={() => setStatusF(value)}
-              style={{
-                height: 38,
-                padding: "0 14px",
-                borderRadius: 999,
-                border: `1px solid ${
-                  statusF === value ? "transparent" : T.border
-                }`,
-                background: statusF === value ? T.accent : T.bg3,
-                color: statusF === value ? "#fff" : T.textSub,
-                fontWeight: 700,
-                fontSize: 11,
-                cursor: "pointer",
-                transition: "all .15s",
-              }}
+              key={val}
+              onClick={() => handleStatusChange(val)}
+              style={tabBtnStyle(statusF === val)}
             >
               {label}
             </button>
           ))}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            background: T.bg3,
+            padding: 4,
+            borderRadius: 12,
+            border: `1px solid ${T.border}`,
+            marginLeft: "auto",
+          }}
+        >
+          <button
+            onClick={() => setViewMode("grid")}
+            style={viewBtnStyle(viewMode === "grid")}
+          >
+            <Ic.LayoutGrid size={18} />
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            style={viewBtnStyle(viewMode === "table")}
+          >
+            <Ic.List size={18} />
+          </button>
         </div>
 
         <Btn onClick={openCreate}>
@@ -837,150 +857,310 @@ export default function AllSuppliers() {
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-          gap: 14,
-        }}
-      >
-        {isLoading ? (
-          <div style={{ gridColumn: "1/-1", padding: 60, textAlign: "center" }}>
-            <p style={{ color: T.textSub }}>{t("loading")}</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div
-            style={{
-              gridColumn: "1/-1",
-              padding: 60,
-              textAlign: "center",
-              ...card(),
-            }}
-          >
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🏭</div>
-            <h3 style={{ color: T.text, margin: "0 0 6px" }}>
-              {t("noSuppliersFound")}
-            </h3>
-            <p style={{ color: T.textSub, fontSize: 13, marginBottom: 20 }}>
-              {t("noData")}
-            </p>
-            <Btn onClick={openCreate} style={{ margin: "0 auto" }}>
-              <Ic.Plus /> {t("addSupplier")}
-            </Btn>
-          </div>
-        ) : (
-          filtered.map((s, idx) => (
+      {viewMode === "grid" && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+            gap: 14,
+          }}
+        >
+          {isLoading ? (
+            <div style={{ gridColumn: "1/-1", padding: 60, textAlign: "center" }}>
+              <p style={{ color: T.textSub }}>{t("loading")}</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div
-              key={s.supplier_id}
               style={{
+                gridColumn: "1/-1",
+                padding: 60,
+                textAlign: "center",
                 ...card(),
-                padding: 18,
-                borderTop: `3px solid ${s.is_active ? T.accent : T.textMut}`,
-                animation: `cardIn .25s ease ${idx * 0.03}s both`,
               }}
             >
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🏭</div>
+              <h3 style={{ color: T.text, margin: "0 0 6px" }}>
+                {t("noSuppliersFound")}
+              </h3>
+              <p style={{ color: T.textSub, fontSize: 13, marginBottom: 20 }}>
+                {t("noData")}
+              </p>
+              <Btn onClick={openCreate} style={{ margin: "0 auto" }}>
+                <Ic.Plus /> {t("addSupplier")}
+              </Btn>
+            </div>
+          ) : (
+            filtered.map((s, idx) => (
               <div
+                key={s.supplier_id}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 12,
-                  marginBottom: 14,
+                  ...card(),
+                  padding: 18,
+                  borderTop: `3px solid ${s.is_active ? T.accent : T.textMut}`,
+                  animation: `cardIn .25s ease ${idx * 0.03}s both`,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 10,
-                      background: "rgba(172,82,8,0.08)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: T.accent,
-                      fontWeight: 900,
-                      fontSize: 18,
-                    }}
-                  >
-                    {s.supplier_name[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <h3
-                      style={{
-                        color: T.text,
-                        fontSize: 14.5,
-                        fontWeight: 900,
-                        margin: 0,
-                      }}
-                    >
-                      {s.supplier_name}
-                    </h3>
-                    <p style={{ color: T.textMut, fontSize: 10, margin: 0 }}>
-                      ID: {s.supplier_id}
-                    </p>
-                  </div>
-                </div>
-
-                <Badge color={s.is_active ? "green" : "red"} small>
-                  {s.is_active ? t("active").toUpperCase() : t("inactive").toUpperCase()}
-                </Badge>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  marginBottom: 16,
-                }}
-              >
-                <DetailItem label={t("contactPerson")} value={s.contact_person || "—"} />
-                <DetailItem label={t("phone")} value={s.phone || "—"} />
-                <DetailItem label={t("email")} value={s.email || "—"} />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: 8,
-                  paddingTop: 14,
-                  borderTop: `1px solid ${T.border}`,
-                }}
-              >
-                <button
-                  onClick={() => openView(s)}
-                  style={actionBtnStyle("rgba(34,197,94,0.1)", T.green)}
-                >
-                  <Ic.Eye /> {t("view")}
-                </button>
-                <button
-                  onClick={() => openEdit(s)}
-                  style={actionBtnStyle("rgba(172,82,8,0.12)", T.accent)}
-                >
-                  <Ic.Edit /> {t("edit")}
-                </button>
-                <button
-                  onClick={() => openDelete(s)}
+                <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "rgba(239,68,68,0.1)",
-                    border: "1px solid rgba(239,68,68,0.2)",
-                    color: T.red,
-                    cursor: "pointer",
-                    display: "grid",
-                    placeItems: "center",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    marginBottom: 14,
                   }}
                 >
-                  <Ic.Trash />
-                </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                      style={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 10,
+                        background: "rgba(172,82,8,0.08)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: T.accent,
+                        fontWeight: 900,
+                        fontSize: 18,
+                      }}
+                    >
+                      {s.supplier_name[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <h3
+                        style={{
+                          color: T.text,
+                          fontSize: 14.5,
+                          fontWeight: 900,
+                          margin: 0,
+                        }}
+                      >
+                        {s.supplier_name}
+                      </h3>
+                      <p style={{ color: T.textMut, fontSize: 10, margin: 0 }}>
+                        ID: {s.supplier_id}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Badge color={s.is_active ? "green" : "red"} small>
+                    {s.is_active
+                      ? t("active").toUpperCase()
+                      : t("inactive").toUpperCase()}
+                  </Badge>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    marginBottom: 16,
+                  }}
+                >
+                  <DetailItem
+                    label={t("contactPerson")}
+                    value={s.contact_person || "—"}
+                  />
+                  <DetailItem label={t("phone")} value={s.phone || "—"} />
+                  <DetailItem label={t("email")} value={s.email || "—"} />
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    paddingTop: 14,
+                    borderTop: `1px solid ${T.border}`,
+                  }}
+                >
+                  <button
+                    onClick={() => openView(s)}
+                    style={actionBtnStyle("rgba(34,197,94,0.1)", T.green)}
+                  >
+                    <Ic.Eye /> {t("view")}
+                  </button>
+                  <button
+                    onClick={() => openEdit(s)}
+                    style={actionBtnStyle("rgba(172,82,8,0.12)", T.accent)}
+                  >
+                    <Ic.Edit /> {t("edit")}
+                  </button>
+                  <button
+                    onClick={() => openDelete(s)}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: "rgba(239,68,68,0.1)",
+                      border: "1px solid rgba(239,68,68,0.2)",
+                      color: T.red,
+                      cursor: "pointer",
+                      display: "grid",
+                      placeItems: "center",
+                    }}
+                  >
+                    <Ic.Trash />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {viewMode === "table" && (
+        <div style={{ ...card(), overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: 900,
+              }}
+            >
+              <thead style={{ background: T.bg2 }}>
+                <tr>
+                  {[
+                    t("supplier"),
+                    t("contactPerson"),
+                    t("contactDetails"),
+                    t("gstNumber"),
+                    t("status"),
+                    t("action"),
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "12px 14px",
+                        textAlign: "left",
+                        color: T.textMut,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: "0.06em",
+                        borderBottom: `1px solid ${T.border}`,
+                      }}
+                    >
+                      {h.toUpperCase()}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      style={{ padding: 40, textAlign: "center", color: T.textSub }}
+                    >
+                      {t("loading")}...
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      style={{ padding: 40, textAlign: "center", color: T.textSub }}
+                    >
+                      {t("noSuppliersFound")}
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((s) => (
+                    <tr
+                      key={s.supplier_id}
+                      style={{ borderBottom: `1px solid ${T.border}` }}
+                    >
+                      <td style={{ padding: "12px 14px" }}>
+                        <p
+                          style={{
+                            color: T.text,
+                            fontWeight: 700,
+                            fontSize: 13,
+                            margin: 0,
+                          }}
+                        >
+                          {s.supplier_name}
+                        </p>
+                        <p
+                          style={{
+                            color: T.textMut,
+                            fontSize: 10,
+                            margin: "2px 0 0",
+                          }}
+                        >
+                          ID: {s.supplier_id}
+                        </p>
+                      </td>
+                      <td
+                        style={{
+                          padding: "12px 14px",
+                          color: T.textSub,
+                          fontSize: 12,
+                        }}
+                      >
+                        {s.contact_person || "—"}
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <p style={{ color: T.textSub, fontSize: 12, margin: 0 }}>
+                          {s.phone || "—"}
+                        </p>
+                        <p
+                          style={{
+                            color: T.textMut,
+                            fontSize: 10.5,
+                            margin: "2px 0 0",
+                          }}
+                        >
+                          {s.email || "—"}
+                        </p>
+                      </td>
+                      <td
+                        style={{
+                          padding: "12px 14px",
+                          color: T.textSub,
+                          fontSize: 12,
+                        }}
+                      >
+                        {s.gst_number || "—"}
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <Badge color={s.is_active ? "green" : "red"} small>
+                          {s.is_active ? t("active") : t("inactive")}
+                        </Badge>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            onClick={() => openView(s)}
+                            style={tableActionBtn(T.green, "rgba(34,197,94,0.1)")}
+                          >
+                            <Ic.Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => openEdit(s)}
+                            style={tableActionBtn(T.accent, "rgba(172,82,8,0.12)")}
+                          >
+                            <Ic.Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => openDelete(s)}
+                            style={tableActionBtn(T.red, "rgba(248,113,113,0.1)")}
+                          >
+                            <Ic.Trash size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
 
       {(modal === "create" || modal === "edit" || modal === "view") && (
         <SupplierModal
@@ -1091,5 +1271,50 @@ function actionBtnStyle(bg, color) {
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
+  };
+}
+
+function viewBtnStyle(active) {
+  return {
+    width: 36,
+    height: 36,
+    borderRadius: 9,
+    border: "none",
+    background: active ? T.accent : "transparent",
+    color: active ? "#fff" : T.textMut,
+    cursor: "pointer",
+    display: "grid",
+    placeItems: "center",
+    transition: "all .2s",
+  };
+}
+
+function tableActionBtn(color, bg) {
+  return {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    border: `1px solid ${T.border}`,
+    background: bg,
+    color,
+    cursor: "pointer",
+    display: "grid",
+    placeItems: "center",
+    transition: "all .2s",
+  };
+}
+
+function tabBtnStyle(active) {
+  return {
+    height: 34,
+    padding: "0 14px",
+    borderRadius: 10,
+    border: `1px solid ${active ? T.accent : T.border}`,
+    background: active ? `${T.accent}15` : T.bg3,
+    color: active ? T.accent : T.textSub,
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all .2s",
   };
 }

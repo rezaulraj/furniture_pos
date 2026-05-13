@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useInventoryStore = create((set) => ({
   inventory: [],
+  pagination: {},
   currentInventory: null,
   isLoading: false,
   isSubmitting: false,
@@ -21,9 +22,25 @@ export const useInventoryStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/inventory", { params });
-      const inventory = res.data?.data || [];
-      set({ inventory, isLoading: false });
-      return inventory;
+      const body = res.data;
+      const payload = body?.data;
+
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        set({
+          inventory: payload.data || [],
+          pagination: payload.meta || {},
+          isLoading: false,
+        });
+        return payload.data;
+      } else {
+        const inventoryArray = Array.isArray(payload) ? payload : (payload?.data || []);
+        set({
+          inventory: inventoryArray,
+          pagination: payload?.meta || {},
+          isLoading: false,
+        });
+        return inventoryArray;
+      }
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load inventory"),

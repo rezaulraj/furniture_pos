@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const useSaleStore = create((set) => ({
   sales: [],
+  pagination: {},
   currentSale: null,
   isLoading: false,
   isSubmitting: false,
@@ -16,13 +17,32 @@ export const useSaleStore = create((set) => ({
 
   clearError: () => set({ error: "" }),
 
-  fetchSales: async () => {
+  fetchSales: async (params = {}) => {
     set({ isLoading: true, error: "" });
     try {
-      const res = await api.get("/sales");
-      const sales = res.data?.data || [];
-      set({ sales, isLoading: false });
-      return sales;
+      const res = await api.get("/sales", { params });
+      const body = res.data;
+      
+      // If the backend returns { success: true, data: { data: [], meta: {} } }
+      const payload = body?.data;
+      
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        set({
+          sales: payload.data || [],
+          pagination: payload.meta || {},
+          isLoading: false,
+        });
+        return payload.data;
+      } else {
+        // Fallback for legacy or direct array responses
+        const salesArray = Array.isArray(payload) ? payload : (payload?.data || []);
+        set({
+          sales: salesArray,
+          pagination: payload?.meta || {},
+          isLoading: false,
+        });
+        return salesArray;
+      }
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load sales"),

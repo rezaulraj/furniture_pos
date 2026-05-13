@@ -7,6 +7,7 @@ import { useInventoryStore } from "../../store/inventoryStore";
 import { useProductStore } from "../../store/productStore";
 import { useBranchStore } from "../../store/branchStore";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const EMPTY_FORM = {
   store_id: "",
@@ -34,6 +35,7 @@ export default function StockOverview() {
   const { t } = useLanguageStore();
   const {
     inventory,
+    pagination,
     isLoading,
     isSubmitting,
     isDeleting,
@@ -59,39 +61,24 @@ export default function StockOverview() {
   const [search, setSearch] = useState("");
   const [storeFilter, setStoreFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState("table");
   const [modal, setModal] = useState(null);
   const [activeInventory, setActiveInventory] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    fetchInventory();
+    const params = { page, limit: 10, search };
+    if (storeFilter !== "all") params.store_id = storeFilter;
+    if (statusFilter !== "all") params.status = statusFilter;
+    fetchInventory(params);
     fetchProducts();
     fetchBranches();
     clearError();
-  }, [fetchInventory, fetchProducts, fetchBranches, clearError]);
+  }, [page, search, storeFilter, statusFilter, fetchInventory, fetchProducts, fetchBranches, clearError]);
 
-  const filtered = useMemo(() => {
-    return inventory.filter((item) => {
-      const productName = item.product?.product_name || "";
-      const sku = item.product?.sku || "";
-      const storeName = item.store?.store_name || "";
-      const q = search.toLowerCase();
-
-      const matchesSearch =
-        productName.toLowerCase().includes(q) ||
-        sku.toLowerCase().includes(q) ||
-        storeName.toLowerCase().includes(q);
-
-      const matchesStore =
-        storeFilter === "all" || Number(item.store_id) === Number(storeFilter);
-
-      const status = getStockStatus(item.quantity, item.minimum_stock);
-      const matchesStatus = statusFilter === "all" || status === statusFilter;
-
-      return matchesSearch && matchesStore && matchesStatus;
-    });
-  }, [inventory, search, storeFilter, statusFilter]);
+  const filtered = inventory;
 
   const totalItems = inventory.length;
   const totalQty = inventory.reduce(
@@ -319,6 +306,30 @@ export default function StockOverview() {
           <option value="out">{t("out")}</option>
         </select>
 
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            background: T.bg3,
+            padding: 4,
+            borderRadius: 12,
+            border: `1px solid ${T.border}`,
+          }}
+        >
+          <button
+            onClick={() => setViewMode("grid")}
+            style={viewBtnStyle(viewMode === "grid")}
+          >
+            <Ic.LayoutGrid size={18} />
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            style={viewBtnStyle(viewMode === "table")}
+          >
+            <Ic.List size={18} />
+          </button>
+        </div>
+
         <Btn onClick={openCreate}>
           <Ic.Plus /> {t("addInventory")}
         </Btn>
@@ -337,142 +348,319 @@ export default function StockOverview() {
         </div>
       )}
 
-      <div style={{ ...card(), overflow: "hidden" }}>
+      {viewMode === "grid" && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "2fr 1.5fr .8fr .8fr .8fr 1fr 140px",
-            gap: 12,
-            padding: "14px 16px",
-            background: T.bg2,
-            borderBottom: `1px solid ${T.border}`,
+            gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))",
+            gap: 14,
           }}
         >
-          {[t("product"), t("store"), t("qty"), t("min"), t("max"), t("status"), t("action")].map(
-            (h) => (
+          {isLoading ? (
+            [1, 2, 3].map((i) => (
+              <div key={i} style={{ ...card(), minHeight: 200, opacity: 0.6 }} />
+            ))
+          ) : filtered.length === 0 ? (
+            <div
+              style={{
+                ...card(),
+                padding: 40,
+                gridColumn: "1/-1",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 46 }}>📦</div>
+              <p style={{ color: T.textSub, fontWeight: 700 }}>
+                {t("noInventoryFound")}
+              </p>
+            </div>
+          ) : (
+            filtered.map((item) => {
+              const status = getStockStatus(item.quantity, item.minimum_stock);
+              const s = statusMap[status];
+
+              return (
+                <div
+                  key={item.inventory_id}
+                  style={{
+                    ...card(),
+                    padding: 18,
+                    borderTop: `3px solid ${
+                      s.color === "green"
+                        ? T.green
+                        : s.color === "yellow"
+                          ? T.accent
+                          : T.red
+                    }`,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div>
+                      <p
+                        style={{
+                          color: T.text,
+                          margin: 0,
+                          fontWeight: 800,
+                          fontSize: 14,
+                        }}
+                      >
+                        {item.product?.product_name}
+                      </p>
+                      <p
+                        style={{
+                          color: T.accent,
+                          fontSize: 11,
+                          fontFamily: "monospace",
+                          margin: "3px 0 0",
+                        }}
+                      >
+                        {item.product?.sku}
+                      </p>
+                    </div>
+                    <Badge color={s.color} small>
+                      {s.label}
+                    </Badge>
+                  </div>
+
+                  <div
+                    style={{
+                      margin: "14px 0",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
+                    <InfoLine label={t("store")} value={item.store?.store_name} />
+                    <InfoLine
+                      label={t("location")}
+                      value={item.location_in_store || t("noLocation")}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        background: T.bg3,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        marginTop: 4,
+                      }}
+                    >
+                      <div>
+                        <p
+                          style={{ color: T.textMut, fontSize: 10, margin: 0 }}
+                        >
+                          {t("qty").toUpperCase()}
+                        </p>
+                        <p
+                          style={{ color: T.text, fontWeight: 900, margin: 0 }}
+                        >
+                          {item.quantity}
+                        </p>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <p
+                          style={{ color: T.textMut, fontSize: 10, margin: 0 }}
+                        >
+                          {t("min").toUpperCase()} / {t("max").toUpperCase()}
+                        </p>
+                        <p
+                          style={{ color: T.textSub, fontWeight: 700, margin: 0 }}
+                        >
+                          {item.minimum_stock} / {item.maximum_stock || "∞"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      paddingTop: 12,
+                      borderTop: `1px solid ${T.border}`,
+                    }}
+                  >
+                    <button
+                      onClick={() => openAddStock(item)}
+                      style={{ ...actionBtnStyle(T.green, "rgba(34,197,94,.1)"), flex: 1 }}
+                    >
+                      <Ic.Plus size={16} /> {t("add")}
+                    </button>
+                    <button
+                      onClick={() => openEdit(item)}
+                      style={{ ...actionBtnStyle(T.accent, "rgba(172,82,8,.1)"), flex: 1 }}
+                    >
+                      <Ic.Edit size={16} /> {t("edit")}
+                    </button>
+                    <button
+                      onClick={() => openDelete(item)}
+                      style={{ ...actionBtnStyle(T.red, "rgba(248,113,113,.1)"), flex: 1 }}
+                    >
+                      <Ic.Trash size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {viewMode === "table" && (
+        <div style={{ ...card(), overflow: "hidden" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "2fr 1.5fr .8fr .8fr .8fr 1fr 140px",
+              gap: 12,
+              padding: "14px 16px",
+              background: T.bg2,
+              borderBottom: `1px solid ${T.border}`,
+            }}
+          >
+            {[
+              t("product"),
+              t("store"),
+              t("qty"),
+              t("min"),
+              t("max"),
+              t("status"),
+              t("action"),
+            ].map((h) => (
               <div
                 key={h}
                 style={{ color: T.textMut, fontSize: 10, fontWeight: 800 }}
               >
                 {h.toUpperCase()}
               </div>
-            ),
+            ))}
+          </div>
+
+          {isLoading ? (
+            <div style={{ padding: 30, textAlign: "center", color: T.textSub }}>
+              {t("loading")}...
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: 44, textAlign: "center" }}>
+              <div style={{ fontSize: 46 }}>📦</div>
+              <p style={{ color: T.textSub, fontWeight: 700 }}>
+                {t("noInventoryFound")}
+              </p>
+              <Btn onClick={openCreate}>
+                <Ic.Plus /> {t("createInventory")}
+              </Btn>
+            </div>
+          ) : (
+            filtered.map((item) => {
+              const status = getStockStatus(item.quantity, item.minimum_stock);
+              const s = statusMap[status];
+
+              return (
+                <div
+                  key={item.inventory_id}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "2fr 1.5fr .8fr .8fr .8fr 1fr 140px",
+                    gap: 12,
+                    padding: "14px 16px",
+                    borderBottom: `1px solid ${T.border}`,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        color: T.text,
+                        margin: 0,
+                        fontWeight: 800,
+                        fontSize: 13,
+                      }}
+                    >
+                      {item.product?.product_name || t("unknownProduct")}
+                    </p>
+                    <p
+                      style={{
+                        color: T.accent,
+                        margin: "3px 0 0",
+                        fontSize: 11,
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      {item.product?.sku || "NO-SKU"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p style={{ color: T.textSub, margin: 0, fontSize: 12 }}>
+                      {item.store?.store_name || t("unknownStore")}
+                    </p>
+                    <p
+                      style={{
+                        color: T.textMut,
+                        margin: "3px 0 0",
+                        fontSize: 10,
+                      }}
+                    >
+                      {item.location_in_store || t("noLocation")}
+                    </p>
+                  </div>
+
+                  <div style={{ color: T.text, fontWeight: 900 }}>
+                    {item.quantity ?? 0}
+                  </div>
+                  <div style={{ color: T.textSub }}>
+                    {item.minimum_stock ?? 0}
+                  </div>
+                  <div style={{ color: T.textSub }}>
+                    {item.maximum_stock ?? "—"}
+                  </div>
+
+                  <div>
+                    <Badge color={s.color} small>
+                      {s.label}
+                    </Badge>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => openAddStock(item)}
+                      style={iconButtonStyle(T.green, "rgba(34,197,94,.12)")}
+                      title={t("addStock")}
+                    >
+                      <Ic.Plus />
+                    </button>
+                    <button
+                      onClick={() => openEdit(item)}
+                      style={iconButtonStyle(T.accent)}
+                      title={t("edit")}
+                    >
+                      <Ic.Edit />
+                    </button>
+                    <button
+                      onClick={() => openDelete(item)}
+                      style={iconButtonStyle(T.red, "rgba(248,113,113,.1)")}
+                      title={t("delete")}
+                    >
+                      <Ic.Trash />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
+      )}
 
-        {isLoading ? (
-          <div style={{ padding: 30, textAlign: "center", color: T.textSub }}>
-            {t("loading")}...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ padding: 44, textAlign: "center" }}>
-            <div style={{ fontSize: 46 }}>📦</div>
-            <p style={{ color: T.textSub, fontWeight: 700 }}>
-              {t("noInventoryFound")}
-            </p>
-            <Btn onClick={openCreate}>
-              <Ic.Plus /> {t("createInventory")}
-            </Btn>
-          </div>
-        ) : (
-          filtered.map((item) => {
-            const status = getStockStatus(item.quantity, item.minimum_stock);
-            const s = statusMap[status];
-
-            return (
-              <div
-                key={item.inventory_id}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "2fr 1.5fr .8fr .8fr .8fr 1fr 140px",
-                  gap: 12,
-                  padding: "14px 16px",
-                  borderBottom: `1px solid ${T.border}`,
-                  alignItems: "center",
-                }}
-              >
-                <div>
-                  <p
-                    style={{
-                      color: T.text,
-                      margin: 0,
-                      fontWeight: 800,
-                      fontSize: 13,
-                    }}
-                  >
-                    {item.product?.product_name || t("unknownProduct")}
-                  </p>
-                  <p
-                    style={{
-                      color: T.accent,
-                      margin: "3px 0 0",
-                      fontSize: 11,
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {item.product?.sku || "NO-SKU"}
-                  </p>
-                </div>
-
-                <div>
-                  <p style={{ color: T.textSub, margin: 0, fontSize: 12 }}>
-                    {item.store?.store_name || t("unknownStore")}
-                  </p>
-                  <p
-                    style={{
-                      color: T.textMut,
-                      margin: "3px 0 0",
-                      fontSize: 10,
-                    }}
-                  >
-                    {item.location_in_store || t("noLocation")}
-                  </p>
-                </div>
-
-                <div style={{ color: T.text, fontWeight: 900 }}>
-                  {item.quantity ?? 0}
-                </div>
-                <div style={{ color: T.textSub }}>
-                  {item.minimum_stock ?? 0}
-                </div>
-                <div style={{ color: T.textSub }}>
-                  {item.maximum_stock ?? "—"}
-                </div>
-
-                <div>
-                  <Badge color={s.color} small>
-                    {s.label}
-                  </Badge>
-                </div>
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={() => openAddStock(item)}
-                    style={iconButton(T.green, "rgba(34,197,94,.12)")}
-                    title={t("addStock")}
-                  >
-                    <Ic.Plus />
-                  </button>
-                  <button
-                    onClick={() => openEdit(item)}
-                    style={iconButton(T.accent)}
-                    title={t("edit")}
-                  >
-                    <Ic.Edit />
-                  </button>
-                  <button
-                    onClick={() => openDelete(item)}
-                    style={iconButton(T.red, "rgba(248,113,113,.1)")}
-                    title={t("delete")}
-                  >
-                    <Ic.Trash />
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+      <Pagination
+        meta={useInventoryStore.getState().pagination}
+        onPageChange={(p) => setPage(p)}
+      />
 
       {(modal === "create" || modal === "edit") && (
         <InventoryModal
@@ -850,7 +1038,7 @@ function inputStyle() {
   };
 }
 
-function iconButton(color, bg = "rgba(96,165,250,.1)") {
+function iconButtonStyle(color, bg = "rgba(172,82,8,.1)") {
   return {
     width: 32,
     height: 32,
@@ -861,5 +1049,58 @@ function iconButton(color, bg = "rgba(96,165,250,.1)") {
     cursor: "pointer",
     display: "grid",
     placeItems: "center",
+    transition: "all .2s",
   };
+}
+
+function actionBtnStyle(color, bg) {
+  return {
+    height: 34,
+    padding: "0 10px",
+    borderRadius: 8,
+    background: bg,
+    border: `1px solid ${T.border}`,
+    color,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    fontSize: 11,
+    fontWeight: 700,
+    transition: "all .2s",
+  };
+}
+
+function viewBtnStyle(active) {
+  return {
+    width: 36,
+    height: 36,
+    borderRadius: 9,
+    border: "none",
+    background: active ? T.accent : "transparent",
+    color: active ? "#fff" : T.textMut,
+    cursor: "pointer",
+    display: "grid",
+    placeItems: "center",
+    transition: "all .2s",
+  };
+}
+
+function InfoLine({ label, value, strong, color }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+      <span style={{ color: T.textMut, fontSize: 11.5 }}>{label}</span>
+      <span
+        style={{
+          color: color || (strong ? T.text : T.textSub),
+          fontSize: 11.5,
+          fontWeight: strong ? 900 : 700,
+          textAlign: "right",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }

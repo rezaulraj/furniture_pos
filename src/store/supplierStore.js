@@ -10,6 +10,12 @@ const normalizeError = (error, fallback) =>
 export const useSupplierStore = create((set) => ({
   suppliers: [],
   currentSupplier: null,
+  pagination: {
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  },
   isLoading: false,
   isSubmitting: false,
   isDeleting: false,
@@ -22,9 +28,13 @@ export const useSupplierStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/suppliers", { params });
-      const suppliers = res.data?.data || [];
-      set({ suppliers, isLoading: false });
-      return suppliers;
+      const { data, meta } = res.data?.data || { data: [], meta: {} };
+      set({
+        suppliers: data,
+        pagination: meta,
+        isLoading: false,
+      });
+      return data;
     } catch (error) {
       const message = normalizeError(error, "Failed to load suppliers");
       set({ error: message, isLoading: false });

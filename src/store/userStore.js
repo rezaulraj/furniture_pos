@@ -10,6 +10,7 @@ const normalizeError = (error, fallback) =>
 export const useUserStore = create((set) => ({
   users: [],
   currentUser: null,
+  pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
   isLoading: false,
   isSubmitting: false,
   isDeleting: false,
@@ -21,7 +22,13 @@ export const useUserStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/users", { params });
-      const users = res.data?.data || [];
+      const raw = res.data?.data;
+      // Handle both paginated and plain array responses
+      if (raw && raw.data && raw.meta) {
+        set({ users: raw.data, pagination: raw.meta, isLoading: false });
+        return raw.data;
+      }
+      const users = raw || [];
       set({ users, isLoading: false });
       return users;
     } catch (error) {

@@ -75,6 +75,9 @@ export const Ic = {
     </svg>
   ),
   ChevRight: () => <Svg d="M9 18l6-6-6-6" sw={2} size={14} />,
+  ChevLeft: () => <Svg d="M15 18l-6-6 6-6" sw={2} size={14} />,
+  ArrowLeft: ({ size = 18 }) => <Svg d="M19 12H5M12 5l-7 7 7 7" size={size} />,
+  ArrowRight: ({ size = 18 }) => <Svg d="M5 12h14M12 19l7-7-7-7" size={size} />,
   User: () => (
     <Svg
       d={[
@@ -249,6 +252,30 @@ export const Ic = {
         "M9 7a4 4 0 100 8 4 4 0 000-8z",
         "M23 21v-2a4 4 0 00-3-3.87",
         "M16 3.13a4 4 0 010 7.75",
+      ]}
+    />
+  ),
+  LayoutGrid: ({ size = 18 }) => (
+    <Svg
+      size={size}
+      d={[
+        "M3 3h7v7H3z",
+        "M14 3h7v7h-7z",
+        "M14 14h7v7h-7z",
+        "M3 14h7v7H3z",
+      ]}
+    />
+  ),
+  List: ({ size = 18 }) => (
+    <Svg
+      size={size}
+      d={[
+        "M8 6h13",
+        "M8 12h13",
+        "M8 18h13",
+        "M3 6h.01",
+        "M3 12h.01",
+        "M3 18h.01",
       ]}
     />
   ),

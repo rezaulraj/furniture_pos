@@ -7,6 +7,7 @@ import { Ic } from "../../components/Icons";
 import { useProductStore } from "../../store/productStore";
 import { useCategoryStore } from "../../store/categoryStore";
 import { useLanguageStore } from "../../store/languageStore";
+import { Pagination } from "../../components/Pagination";
 
 const currency = (value) => {
   const num = Number(value || 0);
@@ -389,6 +390,7 @@ export default function Products() {
 
   const {
     products,
+    pagination,
     isLoading,
     isDeleting,
     error,
@@ -401,6 +403,7 @@ export default function Products() {
 
   const [search, setSearch] = useState("");
   const [categoryF, setCategoryF] = useState("all");
+  const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState("product_name");
   const [sortDir, setSortDir] = useState("asc");
   const [viewMode, setViewMode] = useState("grid");
@@ -408,19 +411,21 @@ export default function Products() {
   const [modalMode, setModalMode] = useState(null);
 
   useEffect(() => {
-    fetchProducts();
+    const params = { page, limit: 10 };
+    if (categoryF !== "all") params.category_id = categoryF;
+    fetchProducts(params);
     fetchCategories({ is_active: true });
     clearError();
-  }, [fetchProducts, fetchCategories, clearError]);
+  }, [page, categoryF]);
 
-  const categoryOptions = useMemo(
-    () => [{ category_id: "all", category_name: t("all") }, ...categories],
-    [categories, t],
-  );
+  const handleCategoryChange = (id) => {
+    setCategoryF(String(id));
+    setPage(1);
+  };
 
+  // Client-side search + sort on current page data
   const filtered = useMemo(() => {
     let items = [...products];
-
     if (search.trim()) {
       const q = search.toLowerCase();
       items = items.filter(
@@ -430,37 +435,29 @@ export default function Products() {
           p.brand?.toLowerCase().includes(q),
       );
     }
-
-    if (categoryF !== "all") {
-      items = items.filter((p) => Number(p.category_id) === Number(categoryF));
-    }
-
     items.sort((a, b) => {
       const aVal = a?.[sortField] ?? "";
       const bVal = b?.[sortField] ?? "";
-
       const numericFields = ["selling_price", "cost_price"];
       if (numericFields.includes(sortField)) {
-        return sortDir === "asc"
-          ? Number(aVal) - Number(bVal)
-          : Number(bVal) - Number(aVal);
+        return sortDir === "asc" ? Number(aVal) - Number(bVal) : Number(bVal) - Number(aVal);
       }
-
       return sortDir === "asc"
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
     });
-
     return items;
-  }, [products, search, categoryF, sortField, sortDir]);
+  }, [products, search, sortField, sortDir]);
 
-  const totalProducts = products.length;
+  const categoryOptions = useMemo(
+    () => [{ category_id: "all", category_name: t("all") }, ...categories],
+    [categories, t],
+  );
+
+  const totalProducts = pagination?.total ?? products.length;
   const activeCount = products.filter((p) => p.is_active).length;
   const inactiveCount = products.filter((p) => !p.is_active).length;
-  const totalValue = products.reduce(
-    (sum, p) => sum + Number(p.selling_price || 0),
-    0,
-  );
+  const totalValue = products.reduce((sum, p) => sum + Number(p.selling_price || 0), 0);
 
   const openView = (product) => {
     setActiveProduct(product);
@@ -656,7 +653,7 @@ export default function Products() {
           {categoryOptions.map((c) => (
             <button
               key={c.category_id}
-              onClick={() => setCategoryF(String(c.category_id))}
+              onClick={() => handleCategoryChange(c.category_id)}
               style={{
                 padding: "7px 14px",
                 borderRadius: 20,
@@ -1149,6 +1146,8 @@ export default function Products() {
           </div>
         </div>
       )}
+
+      <Pagination meta={pagination} onPageChange={(p) => setPage(p)} />
 
       {modalMode === "view" && activeProduct && (
         <ViewModal

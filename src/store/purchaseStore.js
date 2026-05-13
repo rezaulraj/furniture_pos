@@ -9,6 +9,7 @@ const normalizeError = (error, fallback) =>
 
 export const usePurchaseStore = create((set) => ({
   purchases: [],
+  pagination: {},
   currentPurchase: null,
   isLoading: false,
   isSubmitting: false,
@@ -17,13 +18,29 @@ export const usePurchaseStore = create((set) => ({
 
   clearError: () => set({ error: "" }),
 
-  fetchPurchases: async () => {
+  fetchPurchases: async (params = {}) => {
     set({ isLoading: true, error: "" });
     try {
-      const res = await api.get("/purchases");
-      const purchases = res.data?.data || [];
-      set({ purchases, isLoading: false });
-      return purchases;
+      const res = await api.get("/purchases", { params });
+      const body = res.data;
+      const payload = body?.data;
+
+      if (payload && typeof payload === 'object' && 'data' in payload && 'meta' in payload) {
+        set({
+          purchases: payload.data || [],
+          pagination: payload.meta || {},
+          isLoading: false,
+        });
+        return payload.data;
+      } else {
+        const purchasesArray = Array.isArray(payload) ? payload : (payload?.data || []);
+        set({
+          purchases: purchasesArray,
+          pagination: payload?.meta || {},
+          isLoading: false,
+        });
+        return purchasesArray;
+      }
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load purchases"),

@@ -10,6 +10,7 @@ const normalizeError = (error, fallback) =>
 export const useCustomerStore = create((set) => ({
   customers: [],
   currentCustomer: null,
+  pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
   isLoading: false,
   isSubmitting: false,
   isDeleting: false,
@@ -21,8 +22,9 @@ export const useCustomerStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/customers", { params });
-      set({ customers: res.data?.data || [], isLoading: false });
-      return res.data?.data || [];
+      const { data, meta } = res.data?.data || { data: [], meta: {} };
+      set({ customers: data, pagination: meta, isLoading: false });
+      return data;
     } catch (error) {
       set({
         error: normalizeError(error, "Failed to load customers"),

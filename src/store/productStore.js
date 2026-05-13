@@ -21,6 +21,7 @@ const toFormData = (payload) => {
 
 export const useProductStore = create((set) => ({
   products: [],
+  pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
   isLoading: false,
   isSubmitting: false,
   isDeleting: false,
@@ -33,9 +34,9 @@ export const useProductStore = create((set) => ({
     set({ isLoading: true, error: "" });
     try {
       const res = await api.get("/products", { params });
-      const products = res.data?.data || [];
-      set({ products, isLoading: false });
-      return products;
+      const { data, meta } = res.data?.data || { data: [], meta: {} };
+      set({ products: data, pagination: meta, isLoading: false });
+      return data;
     } catch (error) {
       const message = normalizeError(error, "Failed to load products");
       set({ error: message, isLoading: false });
